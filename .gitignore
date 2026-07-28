@@ -1,0 +1,208 @@
+# ============================================================
+# MaiBot 跨市场金融研究助手 — .gitignore
+# 架构：Docker Compose + MaiBot + NapCat Adapter + A_Memorix (Python)
+# 原则：QQ 凭据、模型密钥、数据源密钥、真实聊天数据一律不入库
+# ============================================================
+
+
+# ---- 密钥与凭据（最高优先级，绝不提交） ----
+# 环境变量、密钥、令牌文件
+.env
+.env.*
+!.env.example
+!.env.template
+*.env
+env/*.secret
+secrets/
+/secrets/**
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+id_rsa*
+*.token
+*.secret
+credentials*.json
+service-account*.json
+
+# QQ 凭据 / NapCat 登录态 / session
+qq_session*
+napcat_session*
+*.session*
+*.session-journal
+device-*.json
+quick-login-*
+
+# 模型 API Key / 数据源 API Key
+*api_key*
+*apikey*
+*api-key*
+
+
+# ---- MaiBot / A_Memorix 运行时数据 ----
+# 运行期配置（可能内嵌密钥/令牌，不入库；示例模板除外）
+config/*.toml
+config/*.yaml
+config/*.yml
+config/*.json
+!config/*.example.*
+!config/*.template.*
+!config/*example*
+
+# 数据库与向量索引（聊天记忆、知识库、embedding）
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+data/
+/data/**
+volumes/
+/volumes/**
+*.faiss
+*.index
+*.pkl
+*.pickle
+chroma/
+qdrant/
+milvus/
+pgdata/
+
+
+# ---- 聊天数据 / 媒体缓存 / 备份（隐私敏感） ----
+# 群聊记录、私聊、图片、表情包、转发消息
+chat_logs/
+chats/
+messages/
+*.chat
+images/
+emojis/
+stickers/
+meme/
+cache/
+*.jpg.bak
+*.png.bak
+
+# 备份工件
+backups/
+backup/
+*.bak
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.dump
+*.sql.gz
+*.sql
+
+
+# ---- 日志 ----
+logs/
+*.log
+*.log.*
+*.out
+*.err
+
+
+# ---- Docker（镜像层不得含密钥；卷数据不入库） ----
+# Compose 持久化挂载目录
+docker-data/
+docker/volumes/
+# 自定义构建产物（除非刻意提交镜像相关脚本）
+*.tar-image
+
+
+# ---- Python（MaiBot、插件、金融数据工具均为 Python） ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# 包管理与缓存
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter（数据探索可能用到）
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+
+# ---- Node（部分适配器/工具前端可能用到） ----
+node_modules/
+.npm/
+.pnpm-store/
+yarn-error.log
+
+
+# ---- 编辑器 / IDE ----
+.vscode/
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+.history/
+
+
+# ---- 操作系统 ----
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+
+# ---- 临时与系统文件 ----
+*.tmp
+*.temp
+*.orig
+*.rej
+.tmp/
+tmp/
