@@ -97,6 +97,8 @@ def main() -> int:
         fail("talk_value 必须为 0.75")
     if bot.get("mcp", {}).get("enable") is not False:
         fail("v1 必须禁用 MCP")
+    if bot.get("plugin", {}).get("permission") != []:
+        fail("v1 不得配置基于 QQ 身份的插件权限")
     if bot.get("telemetry", {}).get("enable") is not False:
         fail("v1 必须关闭遥测")
     if bot.get("debug", {}).get("show_maisaka_thinking") is not False:

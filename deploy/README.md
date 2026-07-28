@@ -16,6 +16,8 @@ cp .env.example .env
 ./scripts/start.sh m0
 ```
 
+逐项配置要求与外部控制台操作见 [`docs/open-items.md`](../docs/open-items.md)。除填写 M0 的 `.env` 项外，还必须生成三个彼此不同的 token：Core WebUI、NapCat WebUI 和 NapCat 正向 WebSocket。不配置 QQ 管理员身份或 QQ 维护命令；管理只经 SSH 隧道后的 WebUI token 进行。不要在 `.env` 中额外开启第二个群、普通私聊、MCP、实时数据或交易能力。
+
 `bootstrap.py` 会将实际 `.env` 权限收紧为 `0600`；不要把它复制到 Git、工单、聊天记录或 WebUI 配置导出中。
 
 先阅读锁定镜像中的 EULA 和隐私条款，再按 `.env.example` 的注释填入对应确认值。该值与 MaiBot 1.0.12 镜像内容绑定，不能用 `yes` 或任意文本代替。
@@ -32,7 +34,7 @@ sudo apt-get install apparmor apparmor-utils
 ssh -L 18001:127.0.0.1:18001 -L 6099:127.0.0.1:6099 <user>@<server>
 ```
 
-然后访问本机 `http://127.0.0.1:6099` 完成扫码登录。bootstrap 已预置正向 WebSocket `3001` 和 `.env` 中的 `NAPCAT_WS_TOKEN`；登录后在 NapCat WebUI 中核对它仍为启用状态。完成后用生产群发送无敏感的 `@麦麦` 测试消息。
+然后访问本机 `http://127.0.0.1:6099` 完成扫码登录。bootstrap 已预置唯一的正向 WebSocket `3001` 和 `.env` 中的 `NAPCAT_WS_TOKEN`；登录后在 NapCat WebUI 中核对它仍启用、token 未被改写且不回传自身消息。完成后只在生产群发送预先约定的无敏感 `@麦麦` 测试消息，记录 QQ 往返和 WebUI health 结果。
 
 NapCat 的 WebUI 使用 `.env` 中的 `NAPCAT_WEBUI_TOKEN`。其上游会在 stdout 输出 token 和登录二维码，因此 Compose 默认禁用 NapCat 的 Docker 日志持久化；通过 WebUI 完成登录，不要依赖 `docker-compose logs napcat` 获取二维码。
 
@@ -49,6 +51,8 @@ M2 不会开启实时行情、交易、MCP 或普通私聊。所有变更先运�
 ```bash
 .venv/bin/python scripts/preflight.py --phase m2 --compose
 ```
+
+这只验证已生成配置的结构和 Compose 渲染，不等同于 M2 验收。执行 M2 前还必须完成 `docs/open-items.md` 中的外层硬限流、受限暂停/停机、告警和知识检索测试门槛；这些能力不能通过修改 `.env` 获得。
 
 ## 运维
 

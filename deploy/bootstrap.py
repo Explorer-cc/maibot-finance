@@ -32,7 +32,6 @@ M0_REQUIRED = (
     "WEBUI_ACCESS_TOKEN",
     "BOT_QQ_ACCOUNT",
     "PRODUCTION_GROUP_ID",
-    "MAIBOT_ADMIN_QQ",
     "DEEPSEEK_API_KEY",
     "DEEPSEEK_BASE_URL",
     "DEEPSEEK_MODEL",
@@ -74,7 +73,7 @@ def require(values: dict[str, str], names: tuple[str, ...]) -> None:
     missing = [name for name in names if PLACEHOLDER.match(values.get(name, ""))]
     if missing:
         raise ValueError("以下 .env 项仍未填写：" + ", ".join(missing))
-    for name in ("BOT_QQ_ACCOUNT", "PRODUCTION_GROUP_ID", "MAIBOT_ADMIN_QQ"):
+    for name in ("BOT_QQ_ACCOUNT", "PRODUCTION_GROUP_ID"):
         if not values[name].isdigit():
             raise ValueError(f"{name} 必须是纯数字 QQ/群 ID")
     if len(values["WEBUI_ACCESS_TOKEN"]) < 20:
@@ -170,7 +169,7 @@ no_action_backoff_cap_seconds = 300
 [chat.reply_style]
 enable_reply_quote = true
 group_chat_prompt = "正常群聊不强行引入投资话题；被 @、引用或明确点名时优先回复。不要连续刷屏，不回复自己。"
-private_chat_prompts = "v1 不对普通私聊开放；仅接受受控管理员维护通道。"
+private_chat_prompts = "v1 不开放私聊，也不通过 QQ 接受维护命令。"
 
 [[chat.reply_style.chat_prompts]]
 platform = "qq"
@@ -245,7 +244,7 @@ show_maisaka_thinking = false
 enable = false
 
 [plugin]
-permission = ["qq:{values["MAIBOT_ADMIN_QQ"]}"]
+permission = []
 
 [plugin_runtime]
 enabled = true

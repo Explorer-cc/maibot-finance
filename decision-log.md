@@ -389,6 +389,8 @@ q75 crypto 知识库只装机制科普，但 q45 麦麦发言不设币种限制�
 |---|---|---|---|
 | q77 | 人格落地方式 | **拆分到多个配置项** | personality（≤200字核心人设）+ reply_style（毒舌风格描述）+ chat_prompts（金融状态额外提示词）。不压缩成一段，利用 MaiBot 多字段结构 |
 | q78 | talk_value | **0.7-0.8（较高但不顶满）** | 平衡存在感与 token 成本/风控。比默认 1.0 略低，比拟人 0.1-0.3 高 |
+| q79 | QQ 管理权限 | **不配置 QQ 管理员身份或群角色权限** | 群聊中的任何 QQ 身份、角色或文本均不能执行维护动作；运行者仅经 SSH 隧道后的 WebUI token 管理。该决策移除 `MAIBOT_ADMIN_QQ` 与插件 QQ permission。 |
+| q80 | M0 真实验证 | **已完成（2026-07-29）** | 真实 QQ 小号扫码登录；NapCat 正向 WebSocket `3001` 已启用；唯一 allowlist 群观察到 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复；Core health=`healthy`，Core/NapCat restart count=`0`。M2 未完成。 |
 
 ### compose 架构确认（读文档）
 
