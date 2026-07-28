@@ -1,0 +1,19 @@
+{
+  "id": "crypto-market-mechanism-example",
+  "domain": "crypto",
+  "title": "Replace with the approved document title",
+  "source_url": "https://example.org/approved-source",
+  "author_or_institution": "Replace with publisher or author",
+  "published_at": "2026-01-01",
+  "imported_at": "2026-07-28",
+  "jurisdiction": "global",
+  "version": "1.0",
+  "trust_level": "primary",
+  "license": "Replace with verified license or permission reference",
+  "valid_from": "2026-01-01",
+  "valid_until": null,
+  "status": "active",
+  "reviewer": "Replace with accountable reviewer",
+  "content_file": "approved-document.md",
+  "content_sha256": "replace-with-sha256-of-approved-document"
+}

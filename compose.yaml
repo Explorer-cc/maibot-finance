@@ -1,0 +1,72 @@
+services:
+  core:
+    image: ${MAIBOT_IMAGE}
+    container_name: maibot-core
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      EULA_AGREE: ${MAIBOT_EULA_AGREE}
+      PRIVACY_AGREE: ${MAIBOT_PRIVACY_AGREE}
+      MAIBOT_LEGACY_0X_UPGRADE_CONFIRMED: "1"
+      MAIBOT_STATISTICS_REPORT_PATH: /MaiMBot/data/maibot_statistics.html
+      WEBUI_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:${WEBUI_PORT}:8001"
+    volumes:
+      - ./runtime/core-config:/MaiMBot/config
+      - ./runtime/data/MaiMBot:/MaiMBot/data
+      - ./runtime/data/MaiMBot/emoji:/data/emoji
+      - ./runtime/data/MaiMBot/plugins:/MaiMBot/plugins
+      - ./runtime/data/MaiMBot/logs:/MaiMBot/logs
+      - ./runtime/depends-data:/MaiMBot/depends-data
+    networks:
+      - maibot
+    mem_limit: 1024m
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/webui/health', timeout=3)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+  napcat:
+    image: ${NAPCAT_IMAGE}
+    container_name: maibot-napcat
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      NAPCAT_UID: "1000"
+      NAPCAT_GID: "1000"
+    ports:
+      - "127.0.0.1:${NAPCAT_WEBUI_PORT}:6099"
+    volumes:
+      - ./runtime/napcat-config:/app/napcat/config
+      - ./runtime/data/qq:/app/.config/QQ
+      - ./runtime/data/MaiMBot:/MaiMBot/data
+    networks:
+      - maibot
+    mem_limit: 384m
+    pids_limit: 256
+    logging:
+      driver: "none"
+
+  sqlite-web:
+    image: ${SQLITE_WEB_IMAGE}
+    container_name: maibot-sqlite-web
+    profiles: ["admin"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${SQLITE_WEB_PORT}:8080"
+    volumes:
+      - ./runtime/data/MaiMBot:/data/MaiMBot:ro
+    environment:
+      SQLITE_DATABASE: MaiMBot/MaiBot.db
+    networks:
+      - maibot
+    mem_limit: 128m
+    pids_limit: 64
+
+networks:
+  maibot:
+    driver: bridge
