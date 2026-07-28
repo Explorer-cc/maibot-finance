@@ -38,15 +38,21 @@ ssh -L 18001:127.0.0.1:18001 -L 6099:127.0.0.1:6099 <user>@<server>
 
 NapCat 的 WebUI 使用 `.env` 中的 `NAPCAT_WEBUI_TOKEN`。其上游会在 stdout 输出 token 和登录二维码，因此 Compose 默认禁用 NapCat 的 Docker 日志持久化；通过 WebUI 完成登录，不要依赖 `docker-compose logs napcat` 获取二维码。
 
-## M2
+## M1：模型与多模态就绪
 
-在 `.env` 中补齐视觉与 embedding 项、审核 `common` 与 `crypto` 资料后，执行：
+M1 需要确认 `.env` 中的 Qwen-VL、豆包视觉与豆包 embedding 项，使用一张预先约定的非敏感图片验证视觉解析，以及确认 embedding 模型的供应商实际维度。M1 不导入金融资料、不启用金融检索，也不应为测试 embedding 自动写入人物事实或群摘要。
+
+M1 已提供独立配置、启动参数和预检，可执行：
 
 ```bash
-./scripts/start.sh m2
+./scripts/start.sh m1
 ```
 
-M2 不会开启实时行情、交易、MCP 或普通私聊。所有变更先运行：
+它加载视觉与 embedding 模型，但保持 A_Memorix 插件、检索工具、人物画像注入和自动记忆写回关闭；不会导入金融资料或创建金融向量索引。
+
+## M2：静态金融知识与检索
+
+M2 以前需完成 M1，并为 `common` 与 `crypto` 资料完成 manifest 自动校验。资料准入不要求人工审核。M2 不会开启实时行情、交易、MCP 或普通私聊。所有变更先运行：
 
 ```bash
 .venv/bin/python scripts/preflight.py --phase m2 --compose

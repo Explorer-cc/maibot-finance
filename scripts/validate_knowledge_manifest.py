@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 
 ALLOWED_DOMAINS = {"common", "crypto"}
-ALLOWED_TRUST_LEVELS = {"primary", "official_education", "reviewed_secondary"}
+ALLOWED_TRUST_LEVELS = {"primary", "official_education", "secondary"}
 ALLOWED_STATUSES = {"active", "deprecated"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 
@@ -27,7 +27,7 @@ def fail(message: str) -> None:
 def require_text(payload: dict, field: str) -> str:
     value = payload.get(field)
     if not isinstance(value, str) or not value.strip() or value.startswith("Replace with"):
-        fail(f"{field} 必须是已审核的非空文本")
+        fail(f"{field} 必须是非空文本")
     return value.strip()
 
 
@@ -55,7 +55,7 @@ def main() -> int:
     if not isinstance(payload, dict):
         fail("manifest 根节点必须是 JSON 对象")
 
-    for field in ("id", "title", "author_or_institution", "version", "license", "reviewer"):
+    for field in ("id", "title", "author_or_institution", "version", "license"):
         require_text(payload, field)
     if payload.get("domain") not in ALLOWED_DOMAINS:
         fail("domain 只能是 common 或 crypto")

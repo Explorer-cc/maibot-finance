@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline checks for the MaiBot M0/M2 deployment files."""
+"""Offline checks for the MaiBot M0/M1/M2 deployment files."""
 
 from __future__ import annotations
 
@@ -21,13 +21,20 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
+def display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def read_toml(path: Path) -> dict:
     try:
         return tomllib.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        fail(f"缺少 {path.relative_to(ROOT)}；先运行 deploy/bootstrap.py")
+        fail(f"缺少 {display_path(path)}；先运行 deploy/bootstrap.py")
     except tomllib.TOMLDecodeError as error:
-        fail(f"{path.relative_to(ROOT)} 不是合法 TOML：{error}")
+        fail(f"{display_path(path)} 不是合法 TOML：{error}")
 
 
 def read_env(path: Path) -> dict[str, str]:
@@ -47,7 +54,7 @@ def read_env(path: Path) -> dict[str, str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--phase", choices=("m0", "m2"), default="m0")
+    parser.add_argument("--phase", choices=("m0", "m1", "m2"), default="m0")
     parser.add_argument("--compose", action="store_true", help="also validate docker-compose rendering")
     parser.add_argument("--env-file", type=Path, default=ROOT / ".env")
     parser.add_argument("--runtime-dir", type=Path, default=RUNTIME)
@@ -137,13 +144,27 @@ def main() -> int:
         fail("必须过滤机器人自身消息")
     if adapter.get("napcat_server", {}).get("host") != "napcat":
         fail("适配器必须通过内部 napcat 服务连接")
+    prompts = bot.get("chat", {}).get("reply_style", {}).get("chat_prompts", [])
+    if not isinstance(prompts, list) or len(prompts) != 1:
+        fail("必须只配置唯一生产群的行为提示")
+    group_prompt = prompts[0].get("prompt", "")
+    if not all(term in group_prompt for term in ("具体标的", "买卖时点", "仓位", "交易操作建议")):
+        fail("生产群提示必须拒绝具体投资建议和交易操作建议")
     names = {item.get("name") for item in model.get("models", [])}
     if "deepseek-chat" not in names:
         fail("M0 需要 deepseek-chat")
-    if args.phase == "m2":
+    if args.phase in ("m1", "m2"):
         for name in ("qwen-vl", "doubao-vision", "doubao-embedding"):
             if name not in names:
-                fail(f"M2 缺少模型：{name}")
+                fail(f"{args.phase.upper()} 缺少模型：{name}")
+        tasks = model.get("model_task_config", {})
+        if tasks.get("vlm", {}).get("model_list") != ["qwen-vl", "doubao-vision"]:
+            fail(f"{args.phase.upper()} 的 VLM 必须按 Qwen-VL、豆包视觉顺序配置")
+        if tasks.get("vlm", {}).get("selection_strategy") != "sequential":
+            fail(f"{args.phase.upper()} 的 VLM 必须使用 sequential 回退")
+        if tasks.get("embedding", {}).get("model_list") != ["doubao-embedding"]:
+            fail(f"{args.phase.upper()} 的 embedding 必须显式选择 doubao-embedding")
+    if args.phase == "m2":
         if bot.get("a_memorix", {}).get("plugin", {}).get("enabled") is not True:
             fail("M2 必须启用 A_Memorix")
         integration = bot.get("a_memorix", {}).get("integration", {})
@@ -163,14 +184,14 @@ def main() -> int:
     else:
         a_memorix = bot.get("a_memorix", {})
         if a_memorix.get("plugin", {}).get("enabled") is not False:
-            fail("M0 必须保持 A_Memorix 关闭")
+            fail(f"{args.phase.upper()} 必须保持 A_Memorix 关闭")
         integration = a_memorix.get("integration", {})
         if any(integration.get(key) is not False for key in (
             "enable_memory_query_tool",
             "enable_person_profile_query_tool",
             "enable_person_profile_injection",
         )):
-            fail("M0 必须关闭 A_Memorix 的全部集成入口")
+            fail(f"{args.phase.upper()} 必须关闭 A_Memorix 的全部集成入口")
 
     if args.compose:
         compose_command = shutil.which("docker-compose")

@@ -32,22 +32,35 @@
 - [x] 已在生产群以无敏感 `@麦麦` 触发样例确认 `QQ -> NapCat -> MaiBot -> DeepSeek -> QQ` 往返成功（2026-07-29）。跨群和私聊拒绝仍须按 `plan.md` 使用本地 fixture、受控测试路由或实现级测试验证，不新增真实会话。
 - [x] 已保存不含密钥或聊天正文的验证证据：执行日期、锁定版本/digest、实际模型 ID、WebUI health 状态、QQ 往返结果与异常情况（2026-07-29；见 `docs/implementation-audit.md`）。
 
-## M2：新增 `.env` 与资料配置
+## M1：模型与多模态就绪所需配置
 
-M2 在 M0 往返验证通过后进行。M2 生成器要求以下所有模型项均存在，即使当前群内尚未发送图片也不能留空。
+M1 在 M0 往返验证通过后进行。先在供应商控制台或官方文档确认下列模型项；模型 ID 与 embedding 维度不能只因模板给出候选值而视为已验证。
 
 | 类别 | `.env` 项 | 配置要求 |
 | --- | --- | --- |
 | Qwen-VL | `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL`、`QWEN_VL_MODEL` | 填 DashScope 官方兼容端点、可用 key 和实际 Qwen-VL 模型 ID。 |
 | 豆包视觉 | `VOLCENGINE_API_KEY`、`VOLCENGINE_BASE_URL`、`DOUBAO_VISION_MODEL` | 填火山方舟官方端点、可用 key 和实际视觉模型 ID；作为 Qwen-VL 的顺序降级项。 |
 | 豆包 embedding | `DOUBAO_EMBEDDING_MODEL`、`DOUBAO_EMBEDDING_DIMENSION` | 将模型 ID 与供应商实际返回/官方资料确认的维度成对填写。模板的 `doubao-embedding-vision` 与 `1024` 只是当前候选，不能未经确认上线。模型或维度变更前必须计划 A_Memorix 全量索引重建。 |
-| 静态知识 | `knowledge/` 中的资料与相邻 manifest | 仅导入人工审核、许可明确的 `common` 与 `crypto` 机制科普资料。每份文件须通过 `scripts/validate_knowledge_manifest.py`，再经 WebUI 逐批导入并记录来源召回验证。 |
+
+M1 的验收还需要一张预先约定、无敏感信息且允许发送给模型的测试图片，验证 Qwen-VL 主用、豆包视觉顺序回退和失败降级。M1 不导入金融资料、不创建金融向量索引，也不因测试 embedding 自动写入群摘要或人物事实。
+
+**当前实现：** `scripts/start.sh m1`、`deploy/bootstrap.py --phase m1` 和 `scripts/preflight.py --phase m1` 已可用。M1 生成器加载视觉与 embedding 模型，但保持 A_Memorix 插件、检索工具和人物画像注入关闭；可用 M1 进行模型和图片链路测试，不必运行 `m2`。
+
+## M2：静态金融知识与检索所需资料
+
+M2 以已完成的 M1 为前提。仅导入 `common` 与 `crypto` 机制科普资料；每份文件须通过 `scripts/validate_knowledge_manifest.py`，再由运营者经 SSH 隧道后的 WebUI 导入并记录来源召回验证。资料准入不要求人工审核。
+
+M2 **没有新的 `.env` 项**：它复用 M0 的渠道/DeepSeek 配置和 M1 的视觉/embedding 配置。真实 `.env` 中已有的值无需移动、重新生成或修改；M2 的新增输入是 `knowledge/` 下的资料和 manifest。
+
+| 类别 | 位置 | 配置要求 |
+| --- | --- | --- |
+| 静态知识 | `knowledge/` 中的资料与相邻 manifest | 资料与 manifest 须通过来源 HTTPS、许可证、允许域、日期和 SHA-256 自动校验；不得导入群消息、模型输出、实时行情或未经许可的抓取内容。 |
 
 ## M2：当前不能靠填写 `.env` 完成的门槛
 
 以下项目不是现有 MaiBot 1.0.12 或 Adapter 的环境变量，也尚未由仓库实现；在补齐并验收前，不能把 M2 视为完成：
 
-- [ ] 受审查的外层出站硬限流：唯一生产群每分钟最多 5 条，连续 3 条后强制冷却 30 秒。`talk_value=0.75`、`max_consecutive_wait_count` 与空闲退避只影响回复决策，不能替代硬限流。
+- [ ] 受控的外层出站硬限流：唯一生产群每分钟最多 5 条，连续 3 条后强制冷却 30 秒。`talk_value=0.75`、`max_consecutive_wait_count` 与空闲退避只影响回复决策，不能替代硬限流。
 - [ ] 运营者可仅经 SSH 隧道后的 WebUI token 执行暂停 QQ 入站/出站、关闭主动发言和紧急停机，并验证不会删除运行期数据；群聊消息不能触发这些操作。
 - [ ] 登录失效、频繁验证、发送受限、冻结提示、重复事件和 Adapter 异常的可审计告警与最小处置卡。
 - [ ] `common` 与 `crypto` 的来源追溯、召回、基础作用域隔离、无实时行情声明和高风险金融请求拒绝测试。

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 phase="${1:-m0}"
-if [[ "$phase" != "m0" && "$phase" != "m2" ]]; then
-  echo "用法：$0 [m0|m2]" >&2
+if [[ "$phase" != "m0" && "$phase" != "m1" && "$phase" != "m2" ]]; then
+  echo "用法：$0 [m0|m1|m2]" >&2
   exit 2
 fi
 
