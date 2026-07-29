@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render a secret-bearing M0/M1/M2 configuration baseline outside Git."""
+"""Initialize private MaiBot runtime files without overwriting WebUI changes."""
 
 from __future__ import annotations
 
@@ -92,13 +92,16 @@ def toml(value: str | int | bool) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
-def write_private(path: Path, content: str) -> None:
+def write_private(path: Path, content: str, *, overwrite: bool) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
     os.chmod(path.parent, 0o700)
+    if path.exists() and not overwrite:
+        return False
     temp_path = path.with_suffix(path.suffix + ".tmp")
     temp_path.write_text(content, encoding="utf-8")
     os.chmod(temp_path, 0o600)
     temp_path.replace(path)
+    return True
 
 
 def clone_adapter(values: dict[str, str]) -> None:
@@ -217,7 +220,7 @@ regex_rules = []
 emoji_send_num = 25
 max_reg_num = 128
 do_replace = true
-check_interval = 10
+check_interval = 3
 max_emoji_size_mb = 5
 steal_emoji = {steal_emoji}
 content_filtration = true
@@ -506,11 +509,31 @@ def main() -> int:
     global RUNTIME, CORE_CONFIG, PLUGIN_DIR
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=("m0", "m1", "m2"), default="m0")
+    action_group = parser.add_mutually_exclusive_group(required=True)
+    action_group.add_argument(
+        "--initialize",
+        action="store_true",
+        help="仅创建缺失的私有运行文件，不覆盖 WebUI 已保存的配置",
+    )
+    action_group.add_argument(
+        "--reset-config",
+        action="store_true",
+        help="覆盖现有运行配置，仅用于明确的人工恢复",
+    )
+    parser.add_argument(
+        "--yes-reset-config",
+        action="store_true",
+        help="确认 --reset-config 会覆盖现有运行配置",
+    )
     parser.add_argument("--no-clone-adapter", action="store_true")
     parser.add_argument("--env-file", type=Path, default=ENV_PATH)
     parser.add_argument("--runtime-dir", type=Path, default=RUNTIME)
     args = parser.parse_args()
     try:
+        if args.yes_reset_config and not args.reset_config:
+            raise ValueError("--yes-reset-config 只能与 --reset-config 一起使用")
+        if args.reset_config and not args.yes_reset_config:
+            raise ValueError("--reset-config 会覆盖现有配置；请同时提供 --yes-reset-config 确认")
         RUNTIME = args.runtime_dir.resolve()
         CORE_CONFIG = RUNTIME / "core-config"
         PLUGIN_DIR = RUNTIME / "data" / "MaiMBot" / "plugins" / "MaiBot-Napcat-Adapter"
@@ -519,23 +542,39 @@ def main() -> int:
         require(values, M0_REQUIRED + phase_requirements)
         if not args.no_clone_adapter:
             clone_adapter(values)
-        write_private(CORE_CONFIG / "bot_config.toml", render_bot_config(values, args.phase))
-        write_private(CORE_CONFIG / "model_config.toml", render_model_config(values, args.phase))
-        write_private(PLUGIN_DIR / "config.toml", render_adapter_config(values))
-        write_private(RUNTIME / "data" / "MaiMBot" / "webui.json", render_webui_state(values))
-        write_private(RUNTIME / "napcat-config" / "webui.json", render_napcat_webui_config(values))
-        write_private(RUNTIME / "napcat-config" / "onebot11.json", render_napcat_onebot_config(values))
+        overwrite = args.reset_config
+        runtime_files = (
+            (CORE_CONFIG / "bot_config.toml", render_bot_config(values, args.phase)),
+            (CORE_CONFIG / "model_config.toml", render_model_config(values, args.phase)),
+            (PLUGIN_DIR / "config.toml", render_adapter_config(values)),
+            (RUNTIME / "data" / "MaiMBot" / "webui.json", render_webui_state(values)),
+            (RUNTIME / "napcat-config" / "webui.json", render_napcat_webui_config(values)),
+            (RUNTIME / "napcat-config" / "onebot11.json", render_napcat_onebot_config(values)),
+        )
+        changed_files = [
+            str(path.relative_to(RUNTIME))
+            for path, content in runtime_files
+            if write_private(path, content, overwrite=overwrite)
+        ]
         state = {
             "phase": args.phase,
             "bot_config_sha256": hashlib.sha256((CORE_CONFIG / "bot_config.toml").read_bytes()).hexdigest(),
             "model_config_sha256": hashlib.sha256((CORE_CONFIG / "model_config.toml").read_bytes()).hexdigest(),
             "adapter_commit": values["NAPCAT_ADAPTER_COMMIT"],
         }
-        write_private(RUNTIME / ".bootstrap-state.json", json.dumps(state, ensure_ascii=False, indent=2) + "\n")
+        write_private(
+            RUNTIME / ".bootstrap-state.json",
+            json.dumps(state, ensure_ascii=False, indent=2) + "\n",
+            overwrite=True,
+        )
     except (ValueError, subprocess.CalledProcessError) as error:
         print(f"bootstrap 未完成：{error}", file=sys.stderr)
         return 2
-    print(f"已生成 {args.phase.upper()} 运行配置：{RUNTIME}")
+    if changed_files:
+        action = "已重置" if args.reset_config else "已初始化"
+        print(f"{action} {args.phase.upper()} 运行文件：" + ", ".join(changed_files))
+    else:
+        print(f"未改写已有运行配置：{RUNTIME}")
     return 0
 
 
