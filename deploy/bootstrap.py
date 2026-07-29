@@ -166,6 +166,7 @@ reply_trigger_mode = "reply_necessity"
 max_consecutive_wait_count = 3
 no_action_backoff_base_seconds = 30
 no_action_backoff_cap_seconds = 300
+enable_talk_value_rules = false
 
 [chat.reply_style]
 enable_reply_quote = true
@@ -190,26 +191,64 @@ enable_person_profile_injection = {memory_enabled}
 data_dir = "data/a-memorix"
 {a_memorix_embedding}
 
+[experimental]
+emotion_trait = "sentimental"
+enable_behavior_learning = true
+enable_rich_reply = true
+
+[[experimental.behavior_learning_list]]
+platform = "qq"
+item_id = {toml(values["PRODUCTION_GROUP_ID"])}
+type = "group"
+use = true
+learn = true
+
+[experimental.attention_drift]
+enabled = false
+
 [message_receive]
 image_parse_threshold = 1
+ban_words = []
+
+[keyword_reaction]
+keyword_rules = []
+regex_rules = []
 
 [emoji]
+emoji_send_num = 25
+max_reg_num = 128
+do_replace = true
+check_interval = 10
+max_emoji_size_mb = 5
 steal_emoji = {steal_emoji}
 content_filtration = true
+
+[emoji.cache_cleanup]
+enabled = true
+check_interval_hours = 24
+emoji_file_retention_days = 30
+no_file_record_retention_days = 7
+
+[expression]
+expression_checked_only = false
+expression_self_reflect = false
+expression_selection_mode = "vector"
+expression_vector_candidate_pool_size = 20
+max_expression_learner = 3
 
 [[expression.learning_list]]
 platform = "qq"
 item_id = {toml(values["PRODUCTION_GROUP_ID"])}
 type = "group"
-use = false
-learn = false
+use = true
+learn = true
 
 [[jargon.learning_list]]
 platform = "qq"
 item_id = {toml(values["PRODUCTION_GROUP_ID"])}
 type = "group"
-use = false
-learn = false
+use = true
+learn = true
 
 [maim_message]
 enable_api_server = false

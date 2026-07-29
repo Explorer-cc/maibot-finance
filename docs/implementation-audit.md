@@ -32,15 +32,15 @@
 1. 上游当前存在 `1.1.0`，但本轮仍锁定 `1.0.12`。锁定版本比跟随最新版本更适合第一次接入；`plan.md` 已去除“1.1.0 不存在”的过时表述。
 2. 原计划把 `talk_value=0.75` 误当作可满足 5 QPM 的硬限流。源码核验表明它只控制发言频率；Adapter 提供重连、去重和白名单，但没有 per-group 出站 QPM 或连续回复冷却配置。因此精确限流是 M2 前的明确实现缺口。
 3. M0 使用与后续阶段相同的已固定人格、但保持空知识库和关闭 A_Memorix。这样避免“最小人格”和实际启动配置不一致，同时仍保持 M0 范围最小。
-4. `m1` 生成器加载 Qwen-VL 与 Qwen embedding，启用图片/表情包持久化和表情包收集（`steal_emoji = true`、`content_filtration = true`），同时关闭 A_Memorix、检索工具、人物画像注入与自动记忆写回。M2 复用该 embedding 启用检索；变更 embedding 模型或维度必须重建 M2 索引。
+4. `m1` 生成器加载 Qwen-VL 与 Qwen embedding，并在唯一群通过 MaiBot 原生配置启用行为/表达/黑话学习（三者均 `use = true`、`learn = true`）与表情包收集（`steal_emoji = true`、`content_filtration = true`），同时关闭 A_Memorix、检索工具、人物画像注入与人物事实/群摘要写回。部署层不新增媒体存储、清理、限额或回复逻辑。M2 复用该 embedding 启用检索；变更 embedding 模型或维度必须重建 M2 索引。
 5. 锁定版默认会开启遥测，并在未配置 WebUI token 时把临时完整 token 输出到启动日志。部署生成器现要求单独的 `WEBUI_ACCESS_TOKEN`，预置为私有 `webui.json`，并关闭遥测、思考过程与模型请求/Prompt 快照。上游在读取自定义 token 时仍会输出其 8 字符前缀，因此 M0 将 core 日志级别限制为 `WARNING`；排障时如临时提高日志级别，必须避免将 Docker 日志外发或共享。
 6. M2 的资料目录现在提供受控 manifest 与 SHA-256 校验器，但不包含任何金融资料，也不会自动导入。这样可以在运营者提供经许可文件后先校验元数据和文件完整性，再通过 WebUI 逐批导入。
 7. NapCat 上游会把 WebUI token 与二维码写入 stdout。部署现在在首次启动前写入私有 `webui.json` 和正向 OneBot WebSocket `onebot11.json`（内部 `3001`、与适配器相同的 token），并禁用 NapCat 的 Docker 日志持久化；运营者只能经回环 WebUI 和 SSH 隧道完成登录，不能将容器日志作为登录通道。运行配置不再授予任何 QQ 身份插件权限。
 
 ## M1 前仍未完成
 
-- 确认 Qwen-VL 与 Qwen embedding 凭据、模型 ID 和 embedding 实际维度；以一张预先约定的非敏感图片验证视觉解析、持久化与失败降级。
-- 验证图片和表情包在唯一 allowlist 群保存并可触发适度回复，且 `steal_emoji = true` 保持内容过滤、具备大小、类型、频率、删除和禁用控制。
+- 确认 Qwen-VL 与 Qwen embedding 凭据、模型 ID 和 embedding 实际维度；以一张预先约定的非敏感图片验证视觉解析与失败降级。
+- 验证 Qwen-VL 图片理解与唯一 allowlist 群的 MaiBot 原生表情包收集，且 `steal_emoji = true` 保持内容过滤；不增加自定义媒体控制或回复逻辑。
 - 确保 M1 不导入金融资料、不启用金融检索或自动记忆写回。
 
 ## M2 前仍未完成

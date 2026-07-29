@@ -41,9 +41,9 @@ M1 在 M0 往返验证通过后进行，接入 Qwen-VL 与 Qwen embedding。先�
 | Qwen-VL | `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL`、`QWEN_VL_MODEL` | 填 DashScope 官方兼容端点、可用 key 和实际 Qwen-VL 模型 ID。 |
 | Qwen embedding | `QWEN_EMBEDDING_MODEL`、`QWEN_EMBEDDING_DIMENSION` | 将模型 ID 与供应商实际返回/官方资料确认的维度成对填写；变更任一项前必须计划 A_Memorix 全量索引重建。 |
 
-M1 的验收还需要一张预先约定、无敏感信息且允许发送给模型的测试图片，验证 Qwen-VL 解析成功和可理解的失败降级，并记录 Qwen embedding 的模型 ID 与实际维度。还需在唯一 allowlist 群验证图片和表情包会写入持久化卷、麦麦能适度回复；表情包收集启用 `steal_emoji = true` 并保持 `content_filtration = true`。M1 不导入金融资料、不创建金融向量索引，也不启用群摘要或人物事实自动写回。
+M1 的验收还需要一张预先约定、无敏感信息且允许发送给模型的测试图片，验证 Qwen-VL 解析成功和可理解的失败降级，并记录 Qwen embedding 的模型 ID 与实际维度。还需在唯一 allowlist 群验证 MaiBot 原生行为/表达/黑话学习与表情包收集；三类学习均 `use = true`、`learn = true`，`steal_emoji = true` 并保持 `content_filtration = true`，且 `enable_rich_reply = true` 只使用 MaiBot 既有的图片、表情包和 @ 附加能力。M1 不导入金融资料、不创建金融向量索引，也不启用群摘要或人物事实自动写回，更不新增自定义媒体存储、清理、限额或回复逻辑。
 
-**当前实现：** `scripts/start.sh m1`、`deploy/bootstrap.py --phase m1` 和 `scripts/preflight.py --phase m1` 已可用。M1 生成器加载 Qwen-VL 与 Qwen embedding，启用图片/表情包保存和表情包收集，同时保持 A_Memorix 插件、检索工具、人物画像注入和自动记忆写回关闭；可用 M1 进行模型、图片和表情包链路测试，不必运行 `m2`。
+**当前实现：** `scripts/start.sh m1`、`deploy/bootstrap.py --phase m1` 和 `scripts/preflight.py --phase m1` 已可用。M1 生成器加载 Qwen-VL 与 Qwen embedding，并在唯一群通过 MaiBot 原生行为/表达/黑话学习和 `steal_emoji` 启用表情包收集，同时保持 A_Memorix 插件、检索工具、人物画像注入和人物事实/群摘要写回关闭；可用 M1 进行模型、图片和表情包链路测试，不必运行 `m2`。
 
 ## M2：静态金融知识与检索所需资料
 

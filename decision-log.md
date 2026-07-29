@@ -451,3 +451,51 @@ M2 复用 M1 已验证的 embedding 配置，仅新增资料导入、向量索�
 | q86 | M1 媒体行为 | **保存图片与表情包，并适度回复** | M1 启用 `steal_emoji = true`，保持 `content_filtration = true`；验证持久化、大小、类型、频率、删除和禁用控制。 |
 
 该能力仅限唯一 allowlist 群，且不改变 M1 对 A_Memorix、金融资料、检索和自动记忆写回保持关闭的边界。
+
+---
+
+## 17. M1 仅使用 MaiBot 原生接口（q87）
+
+用户指令：「现在不要自己造任何轮子，只要用 maibot 的原有接口即可」。
+
+| # | 维度 | 最终态 | 备注 |
+|---|---|---|---|
+| q87 | M1 实现边界 | **仅使用 MaiBot 原生模型与表情接口** | 部署层仅渲染 Qwen-VL、Qwen embedding 和 `steal_emoji` 的官方配置，不实现自定义媒体存储、清理、限额或回复逻辑。 |
+
+q87 收窄 q86 的实现方式：视觉解析和表情包收集由锁定版 MaiBot 处理；M1 仍只服务唯一 allowlist 群，并保持 A_Memorix、金融资料、检索和自动记忆写回关闭。
+
+---
+
+## 18. M1 启用原生表达与黑话学习（q88）
+
+用户在逐项配置中选择：唯一 allowlist 群的 MaiBot 原生表达与黑话学习均为 `use = true`、`learn = true`。
+
+| # | 维度 | 最终态 | 备注 |
+|---|---|---|---|
+| q88 | M1 原生学习 | **启用生产群表达与黑话的使用和学习** | 仅配置 `[expression.learning_list]` 与 `[jargon.learning_list]`（均 `use = true`、`learn = true`），且 `expression_checked_only = false`；不启用 A_Memorix、人物事实或群摘要写回。 |
+
+这不是外层自定义记忆功能；数据由 MaiBot 原生表达学习模块管理，且不得改变 L0 人格或安全规则。
+
+---
+
+## 19. M1 使用感性情绪特征（q89）
+
+用户在逐项配置中选择 MaiBot 原生 `experimental.emotion_trait = "sentimental"`。
+
+该实验性设置仅给既有 L0 人格追加更感性的表达倾向；不取代“爱叭叭的毒舌损友”人格，也不影响金融安全规则。
+
+---
+
+## 20. M1 启用原生行为学习（q90）
+
+用户在逐项配置中选择 `experimental.enable_behavior_learning = true`，并将 `[experimental.behavior_learning_list]` 的使用与学习均限制为唯一 allowlist 群。
+
+该能力学习互动时机与回应方式；不启用 A_Memorix、检索、人物事实或群摘要写回。
+
+---
+
+## 21. M1 启用原生丰富回复（q91）
+
+用户在逐项配置中选择 `experimental.enable_rich_reply = true`。
+
+该设置只开放 MaiBot 原生 reply 动作的图片、表情包和 @ 附加能力；不授予外部工具、文件、Docker、Shell、交易或群管理权限。

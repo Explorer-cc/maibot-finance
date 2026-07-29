@@ -40,7 +40,7 @@ NapCat 的 WebUI 使用 `.env` 中的 `NAPCAT_WEBUI_TOKEN`。其上游会在 std
 
 ## M1：模型与多模态就绪
 
-M1 需确认 `.env` 中的 Qwen-VL 与 Qwen embedding 项，用一张预先约定的非敏感图片验证视觉解析、图片保存与适度回复，并确认 embedding 的实际维度。M1 启用表情包收集（`steal_emoji = true`）且保持内容过滤；不导入金融资料、不启用金融检索或自动记忆写回。
+M1 需确认 `.env` 中的 Qwen-VL 与 Qwen embedding 项，用一张预先约定的非敏感图片验证 MaiBot 原生视觉解析，并确认 embedding 的实际维度。M1 在唯一群通过原生行为/表达/黑话学习与 `steal_emoji = true` 启用表情包收集且保持内容过滤；不导入金融资料、不启用金融检索或人物事实/群摘要写回，也不增加自定义媒体功能。
 
 M1 已提供独立配置、启动参数和预检，可执行：
 
@@ -48,7 +48,9 @@ M1 已提供独立配置、启动参数和预检，可执行：
 ./scripts/start.sh m1
 ```
 
-它加载 Qwen-VL 与 Qwen embedding，并启用图片/表情包保存与适度回复；保持 A_Memorix 插件、检索工具、人物画像注入和自动记忆写回关闭，不会导入金融资料或创建金融向量索引。
+它加载 Qwen-VL 与 Qwen embedding，并启用 MaiBot 原生行为/表达/黑话学习和表情包收集；保持 A_Memorix 插件、检索工具、人物画像注入和人物事实/群摘要写回关闭，不会导入金融资料、创建金融向量索引或增加自定义媒体功能。
+
+启动脚本会在生成配置后仅使用 Docker Compose 原生命令重建 `core`，让其读取新的模型配置；不会重启保持 QQ 登录态的 `napcat`。
 
 ## M2：静态金融知识与检索
 
