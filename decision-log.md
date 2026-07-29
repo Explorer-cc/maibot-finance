@@ -8,7 +8,7 @@
 
 ## 0. v1 一句话定义
 
-> 在这台 Debian VM 上，用 Docker Compose 部署 MaiBot 1.0.12 + NapCat，接入运营者现有 QQ 小号，服务一个 10–50 人的熟人私有群。麦麦是一个**爱叭叭的毒舌损友**——投资总亏但爱叭叭、随心所欲半捣乱、不过于专业；什么标的什么市场都随性接茬，但姿态是群友不是研报。知识库以**公开监管文件/交易所教育材料为主**（crypto 域优先），**v1 不接任何实时行情**。模型走 DeepSeek（chat）+ Qwen-VL（vision 首选）+ 豆包（embedding 首选 + vision 备选），三家供应商直连。当前按 M0 -> M1 -> M2 推进，资料准入依赖自动 manifest 校验而非人工审核；任何具体投资建议由固定策略拒绝。（q81/q82 更新）
+> 在这台 Debian VM 上，用 Docker Compose 部署 MaiBot 1.0.12 + NapCat，接入运营者现有 QQ 小号，服务一个 10–50 人的熟人私有群。麦麦是一个**爱叭叭的毒舌损友**——投资总亏但爱叭叭、随心所欲半捣乱、不过于专业；什么标的什么市场都随性接茬，但姿态是群友不是研报。知识库以**公开监管文件/交易所教育材料为主**（crypto 域优先），**v1 不接任何实时行情**。模型只走 DeepSeek（chat）与 DashScope Qwen（VLM、embedding）两家供应商直连。当前按 M0 -> M1 -> M2 推进，资料准入依赖自动 manifest 校验而非人工审核；任何具体投资建议由固定策略拒绝。（q84 更新）
 
 ---
 
@@ -130,7 +130,7 @@
 - **L0 人格**：爱叭叭的毒舌损友人设（随心所欲半捣乱、不过于专业；毒舌仅在语气，安全边界生效），从零撰写（q35 收窄后）
 - **部署**：这台 Debian VM 专用，Docker Compose 编排 MaiBot + NapCat
 - **渠道**：NapCat 接运营者现有小号，单群 allowlist
-- **模型**：DeepSeek（chat/推理）+ Qwen-VL（vision 首选）+ 豆包（embedding 首选 doubao-embedding-vision + vision 备选），三家供应商直连（q70 更新后）
+- **模型**：DeepSeek（chat/推理）+ DashScope Qwen（VLM、embedding），两家供应商直连（q84 更新后）
 - **知识库**：A_Memorix 静态知识库，8 个资料域，公开文件为主（2:7:1）
 - **群聊行为**：MaiBot 原生必要性判断、@/引用优先级、沉默/退避
 - **安全规则**：禁交易账户、禁带单/荐股/保证收益、提示注入隔离
@@ -318,21 +318,21 @@ grilling 未完全收敛、用户声明保留追问权的：
 | ~~NapCat 部署方式~~ | ~~影响 compose 结构~~ | **已解决（读文档）**：Docker 容器，正向 WebSocket 连 core，端口 6099 扫码登录（q73） |
 | ~~A_Memorix 后端~~ | ~~影响 compose 服务数量~~ | **已解决（读文档）**：无额外服务，本地 data_dir + SQLite FTS5 + SQ8 向量化全内嵌。compose 仅 core+napcat+sqlite-web |
 | ~~人格配置文件格式~~ | ~~影响 L0 落地~~ | **已解决（读文档 + q77）**：bot_config.toml [personality] 段（personality + reply_style + multiple_reply_style + chat_prompts），拆分写入多个配置项 |
-| ~~embedding 版本锁定~~ | ~~影响索引结构~~ | **已解决（q72/q70）**：豆包 doubao-embedding-vision（火山引擎 key 已有），A_Memorix dimension 需匹配模型实际维度 |
+| ~~embedding 版本锁定~~ | ~~影响索引结构~~ | 曾定为豆包 `doubao-embedding-vision`；已由 q84 改为 DashScope Qwen embedding，维度仍须匹配实际模型。 |
 
 ---
 
-## 10. 模型栈变更：引入豆包（用户后续指令，推翻 q52）
+## 10. 历史模型栈变更：曾引入豆包（已由 q84 推翻）
 
 用户指令：「加上豆包模型作为视觉和 embedding 的备选」，随后 q70 明确「doubao the first」（豆包 embedding 升首选，推翻 q52）。
 
 | # | 维度 | 最终态 | 备注 |
 |---|---|---|---|
 | q69 | 引入豆包 | vision 备选 + embedding | 用户原始指令 |
-| q70 | embedding 首选 | **豆包 embedding（首选）**，DashScope 降为战略备胎 | 推翻 q52。切换需重建 A_Memorix 全量索引（维度不同不可混用） |
+| q70 | embedding 首选 | ~~豆包 embedding（首选）~~ | 已由 q84 推翻；切换 embedding 模型或维度仍需重建 A_Memorix 全量索引。 |
 | q71 | MaiBot 兼容性 | **已查文档确认**：MaiBot 通过 `client_type="openai"` 的 OpenAI 兼容接口支持火山引擎豆包，无需专用适配器。火山方舟提供 `https://ark.cn-beijing.volces.com/api/v3` 兼容端点 | 文档来源：docs.mai-mai.org/manual/configuration/model-config.md + develop/llm-providers.md |
 
-### 最终模型栈（三家供应商）
+### 当时的模型栈（三家供应商，已由 q84 推翻）
 
 | 槽位 | 首选 | 备选 | 供应商 | 接入方式 |
 |---|---|---|---|---|
@@ -391,7 +391,7 @@ q75 crypto 知识库只装机制科普，但 q45 麦麦发言不设币种限制�
 | q78 | talk_value | **0.7-0.8（较高但不顶满）** | 平衡存在感与 token 成本/风控。比默认 1.0 略低，比拟人 0.1-0.3 高 |
 | q79 | QQ 管理权限 | **不配置 QQ 管理员身份或群角色权限** | 群聊中的任何 QQ 身份、角色或文本均不能执行维护动作；运行者仅经 SSH 隧道后的 WebUI token 管理。该决策移除 `MAIBOT_ADMIN_QQ` 与插件 QQ permission。 |
 | q80 | M0 真实验证 | **已完成（2026-07-29）** | 真实 QQ 小号扫码登录；NapCat 正向 WebSocket `3001` 已启用；唯一 allowlist 群观察到 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复；Core health=`healthy`，Core/NapCat restart count=`0`。M1、M2 未完成。 |
-| q81 | 里程碑分层 | **M0 -> M1 -> M2** | 取代 q50。M1 只验证 Qwen-VL、豆包视觉回退、豆包 embedding 和非敏感图片链路，保持 A_Memorix 与自动记忆写回关闭；M2 再启用静态金融资料与检索。 |
+| q81 | 里程碑分层 | **M0 -> M1 -> M2** | 已由 q83/q84 收窄 M1：M1 只验证 Qwen-VL 和非敏感图片链路，保持 A_Memorix 与自动记忆写回关闭；M2 再加入 Qwen embedding、静态金融资料与检索。 |
 | q82 | 人工审核与验收 | **不设人工审核、人工批准或主观质量确认门槛** | 取代 q67 及历史资料审核流程。M2 资料以来源 HTTPS、许可证、允许域、日期关系和 SHA-256 的 manifest 自动校验准入；具体投资建议由固定安全策略拒绝。 |
 
 ### compose 架构确认（读文档）
@@ -402,4 +402,28 @@ q75 crypto 知识库只装机制科普，但 q45 麦麦发言不设币种限制�
 | napcat | QQ 连接器（NTQQ 协议） | 管理面板 6099，WebSocket 3001 |
 | sqlite-web | 数据库查看工具 | 8120 |
 
-**关键**：不需要 MongoDB、不需要独立向量数据库、不需要模型网关。A_Memorix 全内嵌。三个 API provider（DeepSeek/DashScope/火山引擎）通过 core 容器出站调用。
+**关键**：不需要 MongoDB、不需要独立向量数据库、不需要模型网关。A_Memorix 全内嵌。两个 API provider（DeepSeek/DashScope）通过 core 容器出站调用。
+
+---
+
+## 13. M1 范围收窄：只接入 Qwen-VL（q83）
+
+用户指令：「把基于 doubao 的 fallback 这个功能从 M1 中移除，只配置一个模型提供商就可以了」。
+
+| # | 维度 | 最终态 | 备注 |
+|---|---|---|---|
+| q83 | M1 模型范围 | **既有 DeepSeek + 新增 DashScope Qwen-VL** | M1 不要求火山引擎凭据，不加载豆包视觉回退或 embedding；仅验证 Qwen-VL 的非敏感图片解析。 |
+
+该决定随后被 q84 推翻：豆包不再进入 M2 或 v1 技术栈。
+
+---
+
+## 14. 模型栈收敛为 DeepSeek + Qwen（q84）
+
+用户指令：「把豆包去掉，技术栈里只要 deepseek 作为聊天模型，qwen 负责 embeding 和 VLM 即可」。
+
+| # | 维度 | 最终态 | 备注 |
+|---|---|---|---|
+| q84 | 供应商与任务分工 | **DeepSeek chat/推理 + DashScope Qwen VLM/embedding** | 移除火山引擎、豆包视觉回退和所有 `VOLCENGINE_*`/`DOUBAO_*` 配置。 |
+
+Qwen embedding 的实际模型 ID 与向量维度仍是 M2 前必须由供应商官方资料或实际返回确认的未决项；切换 embedding 模型或维度前必须计划全量索引重建。

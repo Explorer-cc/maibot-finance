@@ -153,17 +153,32 @@ def main() -> int:
     names = {item.get("name") for item in model.get("models", [])}
     if "deepseek-chat" not in names:
         fail("M0 需要 deepseek-chat")
-    if args.phase in ("m1", "m2"):
-        for name in ("qwen-vl", "doubao-vision", "doubao-embedding"):
+    tasks = model.get("model_task_config", {})
+    if args.phase == "m1":
+        if "qwen-vl" not in names:
+            fail("M1 缺少模型：qwen-vl")
+        if names != {"deepseek-chat", "qwen-vl"}:
+            fail("M1 只能加载既有 DeepSeek 与新增 Qwen-VL")
+        provider_names = {item.get("name") for item in model.get("api_providers", [])}
+        if provider_names != {"DeepSeek", "DashScope"}:
+            fail("M1 只能配置既有 DeepSeek 与新增 DashScope 提供商")
+        if tasks.get("vlm", {}).get("model_list") != ["qwen-vl"]:
+            fail("M1 的 VLM 必须只配置 Qwen-VL")
+        if tasks.get("embedding", {}).get("model_list") != []:
+            fail("M1 不得配置 embedding 模型")
+    if args.phase == "m2":
+        for name in ("qwen-vl", "qwen-embedding"):
             if name not in names:
-                fail(f"{args.phase.upper()} 缺少模型：{name}")
-        tasks = model.get("model_task_config", {})
-        if tasks.get("vlm", {}).get("model_list") != ["qwen-vl", "doubao-vision"]:
-            fail(f"{args.phase.upper()} 的 VLM 必须按 Qwen-VL、豆包视觉顺序配置")
-        if tasks.get("vlm", {}).get("selection_strategy") != "sequential":
-            fail(f"{args.phase.upper()} 的 VLM 必须使用 sequential 回退")
-        if tasks.get("embedding", {}).get("model_list") != ["doubao-embedding"]:
-            fail(f"{args.phase.upper()} 的 embedding 必须显式选择 doubao-embedding")
+                fail(f"M2 缺少模型：{name}")
+        if names != {"deepseek-chat", "qwen-vl", "qwen-embedding"}:
+            fail("M2 只能加载 DeepSeek、Qwen-VL 与 Qwen embedding")
+        provider_names = {item.get("name") for item in model.get("api_providers", [])}
+        if provider_names != {"DeepSeek", "DashScope"}:
+            fail("M2 只能配置 DeepSeek 与 DashScope 提供商")
+        if tasks.get("vlm", {}).get("model_list") != ["qwen-vl"]:
+            fail("M2 的 VLM 必须只配置 Qwen-VL")
+        if tasks.get("embedding", {}).get("model_list") != ["qwen-embedding"]:
+            fail("M2 的 embedding 必须显式选择 qwen-embedding")
     if args.phase == "m2":
         if bot.get("a_memorix", {}).get("plugin", {}).get("enabled") is not True:
             fail("M2 必须启用 A_Memorix")
@@ -175,9 +190,9 @@ def main() -> int:
         )):
             fail("M2 必须启用 A_Memorix 的基础检索与画像集成")
         embedding = bot.get("a_memorix", {}).get("embedding", {})
-        if embedding.get("model_name") != "doubao-embedding":
-            fail("M2 的 A_Memorix 必须显式选择 doubao-embedding")
-        if embedding.get("dimension") != int(env["DOUBAO_EMBEDDING_DIMENSION"]):
+        if embedding.get("model_name") != "qwen-embedding":
+            fail("M2 的 A_Memorix 必须显式选择 qwen-embedding")
+        if embedding.get("dimension") != int(env["QWEN_EMBEDDING_DIMENSION"]):
             fail("M2 的 A_Memorix embedding 维度必须与 .env 一致")
         if embedding.get("dimension_request_mode") != "explicit":
             fail("M2 的 embedding 维度请求模式必须为 explicit")

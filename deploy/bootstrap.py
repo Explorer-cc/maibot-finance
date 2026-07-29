@@ -44,11 +44,10 @@ M1_REQUIRED = (
     "DASHSCOPE_API_KEY",
     "DASHSCOPE_BASE_URL",
     "QWEN_VL_MODEL",
-    "VOLCENGINE_API_KEY",
-    "VOLCENGINE_BASE_URL",
-    "DOUBAO_EMBEDDING_MODEL",
-    "DOUBAO_EMBEDDING_DIMENSION",
-    "DOUBAO_VISION_MODEL",
+)
+M2_REQUIRED = (
+    "QWEN_EMBEDDING_MODEL",
+    "QWEN_EMBEDDING_DIMENSION",
 )
 
 
@@ -84,9 +83,11 @@ def require(values: dict[str, str], names: tuple[str, ...]) -> None:
         raise ValueError("MAIBOT_EULA_AGREE 不匹配锁定 MaiBot 1.0.12 的 EULA 确认值")
     if values["MAIBOT_PRIVACY_AGREE"] != MAIBOT_PRIVACY_AGREEMENT:
         raise ValueError("MAIBOT_PRIVACY_AGREE 不匹配锁定 MaiBot 1.0.12 的隐私确认值")
-    embedding_dimension = values.get("DOUBAO_EMBEDDING_DIMENSION", "1024")
-    if not re.fullmatch(r"[0-9]+", embedding_dimension) or int(embedding_dimension) <= 0:
-        raise ValueError("DOUBAO_EMBEDDING_DIMENSION 必须是正整数")
+    embedding_dimension = values.get("QWEN_EMBEDDING_DIMENSION", "")
+    if embedding_dimension and not PLACEHOLDER.match(embedding_dimension) and (
+        not re.fullmatch(r"[0-9]+", embedding_dimension) or int(embedding_dimension) <= 0
+    ):
+        raise ValueError("QWEN_EMBEDDING_DIMENSION 必须是正整数")
 
 
 def toml(value: str | int | bool) -> str:
@@ -133,8 +134,8 @@ def render_bot_config(values: dict[str, str], phase: str) -> str:
     a_memorix_embedding = ""
     if phase == "m2":
         a_memorix_embedding = f'''\n[a_memorix.embedding]
-model_name = "doubao-embedding"
-dimension = {toml(int(values["DOUBAO_EMBEDDING_DIMENSION"]))}
+model_name = "qwen-embedding"
+dimension = {toml(int(values["QWEN_EMBEDDING_DIMENSION"]))}
 dimension_request_mode = "explicit"
 '''
     return f'''[inner]
@@ -299,23 +300,7 @@ api_provider = "DashScope"
 price_in = 0.0
 price_out = 0.0
 visual = true
-''',
-                f'''[[models]]
-model_identifier = {toml(values["DOUBAO_VISION_MODEL"])}
-name = "doubao-vision"
-api_provider = "Volcengine"
-price_in = 0.0
-price_out = 0.0
-visual = true
-''',
-                f'''[[models]]
-model_identifier = {toml(values["DOUBAO_EMBEDDING_MODEL"])}
-name = "doubao-embedding"
-api_provider = "Volcengine"
-price_in = 0.0
-price_out = 0.0
-visual = false
-''',
+'''
             ]
         )
         providers.extend(
@@ -329,16 +314,19 @@ auth_type = "bearer"
 max_retry = 3
 timeout = 100
 retry_interval = 8
-''',
-                f'''[[api_providers]]
-name = "Volcengine"
-base_url = {toml(values["VOLCENGINE_BASE_URL"])}
-api_key = {toml(values["VOLCENGINE_API_KEY"])}
-client_type = "openai"
-auth_type = "bearer"
-max_retry = 3
-timeout = 100
-retry_interval = 8
+'''
+            ]
+        )
+    if phase == "m2":
+        model_blocks.extend(
+            [
+                f'''[[models]]
+model_identifier = {toml(values["QWEN_EMBEDDING_MODEL"])}
+name = "qwen-embedding"
+api_provider = "DashScope"
+price_in = 0.0
+price_out = 0.0
+visual = false
 ''',
             ]
         )
@@ -347,9 +335,12 @@ retry_interval = 8
     tasks.append(task_block("expression_use", []))
     tasks.append(task_block("emoji", []))
     tasks.append(task_block("voice", []))
-    if phase in ("m1", "m2"):
-        tasks.append(task_block("vlm", ["qwen-vl", "doubao-vision"], sequential=True))
-        tasks.append(task_block("embedding", ["doubao-embedding"], sequential=True))
+    if phase == "m1":
+        tasks.append(task_block("vlm", ["qwen-vl"]))
+        tasks.append(task_block("embedding", []))
+    elif phase == "m2":
+        tasks.append(task_block("vlm", ["qwen-vl"]))
+        tasks.append(task_block("embedding", ["qwen-embedding"]))
     else:
         tasks.append(task_block("vlm", []))
         tasks.append(task_block("embedding", []))
@@ -467,7 +458,8 @@ def main() -> int:
         CORE_CONFIG = RUNTIME / "core-config"
         PLUGIN_DIR = RUNTIME / "data" / "MaiMBot" / "plugins" / "MaiBot-Napcat-Adapter"
         values = load_env(args.env_file.resolve())
-        require(values, M0_REQUIRED + (M1_REQUIRED if args.phase in ("m1", "m2") else ()))
+        phase_requirements = M1_REQUIRED if args.phase == "m1" else M1_REQUIRED + M2_REQUIRED if args.phase == "m2" else ()
+        require(values, M0_REQUIRED + phase_requirements)
         if not args.no_clone_adapter:
             clone_adapter(values)
         write_private(CORE_CONFIG / "bot_config.toml", render_bot_config(values, args.phase))

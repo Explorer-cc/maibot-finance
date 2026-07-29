@@ -34,23 +34,21 @@
 
 ## M1：模型与多模态就绪所需配置
 
-M1 在 M0 往返验证通过后进行。先在供应商控制台或官方文档确认下列模型项；模型 ID 与 embedding 维度不能只因模板给出候选值而视为已验证。
+M1 在 M0 往返验证通过后进行，只接入 Qwen-VL。先在 DashScope 控制台或官方文档确认模型项；模型 ID 不能只因模板给出候选值而视为已验证。
 
 | 类别 | `.env` 项 | 配置要求 |
 | --- | --- | --- |
 | Qwen-VL | `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL`、`QWEN_VL_MODEL` | 填 DashScope 官方兼容端点、可用 key 和实际 Qwen-VL 模型 ID。 |
-| 豆包视觉 | `VOLCENGINE_API_KEY`、`VOLCENGINE_BASE_URL`、`DOUBAO_VISION_MODEL` | 填火山方舟官方端点、可用 key 和实际视觉模型 ID；作为 Qwen-VL 的顺序降级项。 |
-| 豆包 embedding | `DOUBAO_EMBEDDING_MODEL`、`DOUBAO_EMBEDDING_DIMENSION` | 将模型 ID 与供应商实际返回/官方资料确认的维度成对填写。模板的 `doubao-embedding-vision` 与 `1024` 只是当前候选，不能未经确认上线。模型或维度变更前必须计划 A_Memorix 全量索引重建。 |
 
-M1 的验收还需要一张预先约定、无敏感信息且允许发送给模型的测试图片，验证 Qwen-VL 主用、豆包视觉顺序回退和失败降级。M1 不导入金融资料、不创建金融向量索引，也不因测试 embedding 自动写入群摘要或人物事实。
+M1 的验收还需要一张预先约定、无敏感信息且允许发送给模型的测试图片，验证 Qwen-VL 解析成功和可理解的失败降级。M1 不导入金融资料、不创建金融向量索引，也不加载 embedding、群摘要或人物事实自动写回。
 
-**当前实现：** `scripts/start.sh m1`、`deploy/bootstrap.py --phase m1` 和 `scripts/preflight.py --phase m1` 已可用。M1 生成器加载视觉与 embedding 模型，但保持 A_Memorix 插件、检索工具和人物画像注入关闭；可用 M1 进行模型和图片链路测试，不必运行 `m2`。
+**当前实现：** `scripts/start.sh m1`、`deploy/bootstrap.py --phase m1` 和 `scripts/preflight.py --phase m1` 已可用。M1 生成器只加载 Qwen-VL，保持 A_Memorix 插件、检索工具、人物画像注入和 embedding 关闭；可用 M1 进行模型和图片链路测试，不必运行 `m2`。
 
 ## M2：静态金融知识与检索所需资料
 
-M2 以已完成的 M1 为前提。仅导入 `common` 与 `crypto` 机制科普资料；每份文件须通过 `scripts/validate_knowledge_manifest.py`，再由运营者经 SSH 隧道后的 WebUI 导入并记录来源召回验证。资料准入不要求人工审核。
+M2 以已完成的 M1 为前提。M2 开始前先确认 DashScope Qwen embedding 的模型 ID 与实际维度。随后仅导入 `common` 与 `crypto` 机制科普资料；每份文件须通过 `scripts/validate_knowledge_manifest.py`，再由运营者经 SSH 隧道后的 WebUI 导入并记录来源召回验证。资料准入不要求人工审核。
 
-M2 **没有新的 `.env` 项**：它复用 M0 的渠道/DeepSeek 配置和 M1 的视觉/embedding 配置。真实 `.env` 中已有的值无需移动、重新生成或修改；M2 的新增输入是 `knowledge/` 下的资料和 manifest。
+M2 新增 DashScope `.env` 项：`QWEN_EMBEDDING_MODEL` 与 `QWEN_EMBEDDING_DIMENSION`。模型 ID 与实际 embedding 维度需成对确认；M2 的其他新增输入是 `knowledge/` 下的资料和 manifest。
 
 | 类别 | 位置 | 配置要求 |
 | --- | --- | --- |

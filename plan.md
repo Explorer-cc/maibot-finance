@@ -13,7 +13,7 @@
 
 ### 关键决策基线（来自 decision-log.md）
 
-- 模型：DeepSeek 主力（chat/推理）+ Qwen-VL（vision 首选）+ **豆包 embedding（首选）+ 豆包视觉（vision 备选）**；三家供应商直连各自官方 API（DeepSeek / DashScope / 火山引擎），不经聚合网关。vision 用 MaiBot `sequential` 策略自动降级（grilling q6/q37/q52 + q69-q71）。
+- 模型：DeepSeek 只负责 chat/推理；DashScope Qwen 负责 VLM 与 embedding。M1 只接入 Qwen-VL，M2 再接入 Qwen embedding；两家均直连官方 API，不经聚合网关。
 - 人格：**爱叭叭的毒舌损友**——投资总亏但爱叭叭的群友，随心所欲半捣乱，不过于专业；金融话题不切换人格、不堆研报术语（grilling q27/q35 + 用户收窄指令）。
 - QQ 号：**运营者现有小号**（已知关联风控可能波及个人账号的风险）；不再强制「独立可弃用」。
 - 部署主机：当前 Debian VM 专用（Xeon Gold、无 GPU，只能走 API）。
@@ -32,15 +32,15 @@
 下列章节是 v1 的完整目标清单，不表示所有项目必须同时完成才能验证首个可用版本。凡依赖 MaiBot、A_Memorix、NapCat 或模型供应商能力的勾选项，完成时均应附上官方文档版本/链接、实际配置位置和验证证据；文中的字段名、端口与模型名在未核验前均只是候选值。
 
 - **M0：最小闭环（已于 2026-07-29 完成真实验证）。** 使用已固定的最小生产人格、空知识库与单群 allowlist，验证 `QQ 消息 -> NapCat -> MaiBot -> DeepSeek -> QQ 回复`；同时通过自身消息过滤、未知会话拒绝、管理面访问限制、密钥不入库和基础发言节奏的最小检查。实际证据为：NapCat 扫码登录、正向 WebSocket `3001` 已启用、生产 allowlist 群收到真实回复，Core health 为 `healthy` 且两个容器重启次数为 `0`。M0 不导入金融资料、不启用实时工具，也不将调试内容写入长期记忆。精确 5 QPM/连续回复冷却不是锁定版 core 或 Adapter 的现成配置项，必须在 M2 前以受控的外层限流实现并测试，不能把 `talk_value` 当作硬限流。
-- **M1：模型与多模态就绪。** 加载并验证 Qwen-VL 主用、豆包视觉顺序回退和豆包 embedding 的模型 ID/维度；以预先约定的非敏感图片完成视觉测试。M1 不导入金融资料、不创建金融向量索引，且 A_Memorix 插件、检索工具、群摘要和人物事实自动写回均保持关闭。
-- **M2：首个可用版本。** 在 M1 基础上导入元数据、许可证和 SHA-256 自动校验通过的 `common` 与 `crypto` 静态机制科普资料，验证来源可追溯、风险回复、无实时行情声明、基础作用域隔离和故障降级。不以人工审核、人工批准、一周观察或主观质量确认作为通过门槛。
+- **M1：Qwen-VL 多模态就绪。** 仅加载并验证 Qwen-VL 的模型 ID 和非敏感图片解析，不配置 embedding、不导入金融资料、不创建金融向量索引，且 A_Memorix 插件、检索工具、群摘要和人物事实自动写回均保持关闭。
+- **M2：首个可用版本。** 在 M1 基础上加入 Qwen embedding，确认 embedding 模型 ID/实际维度后，导入元数据、许可证和 SHA-256 自动校验通过的 `common` 与 `crypto` 静态机制科普资料，验证来源可追溯、风险回复、无实时行情声明、基础作用域隔离和故障降级。不以人工审核、人工批准、一周观察或主观质量确认作为通过门槛。
 - **v1 扩展（M2 后）。** 再逐域导入 A 股、美股、期货、期权、风险管理与监管资料，并逐域增加检索和制度正确性测试。不得因“v1 跨市场”而在 M2 前一次性导入八个域或承诺财报/Greeks 建模。
 
 ## 项目与版本基线
 
 - [ ] 确认目标 Debian 版本、CPU 架构、可用内存、磁盘容量、Docker Engine 与 Compose Plugin 版本，并保存环境清单（已知：Xeon Gold、无 GPU）。
 - [ ] 为本部署建立独立 Git 仓库或私有配置仓库；禁止把 QQ 凭据、模型密钥、数据源密钥或真实聊天数据提交到 Git。
-- [ ] 锁定并记录 MaiBot 1.0.12、MaiBot-Napcat-Adapter、NapCatQQ、A_Memorix、DeepSeek、Qwen-VL、火山引擎豆包的版本、镜像 digest、发布日期和升级来源（实时数据源工具 v2 再锁定）。
+- [ ] 锁定并记录 MaiBot 1.0.12、MaiBot-Napcat-Adapter、NapCatQQ、A_Memorix、DeepSeek 与 DashScope Qwen（VLM、embedding）的版本、镜像 digest、发布日期和升级来源（实时数据源工具 v2 再锁定）。
 - [ ] 阅读并保存 MaiBot 1.0.12 官方安装文档、Docker Compose 示例、配置参考、插件/Tool Calling/MCP 文档、A_Memorix 配置参考和迁移说明。
 - [ ] 阅读并保存与 1.0.12 兼容的 MaiBot-Napcat-Adapter 官方 README、配置说明、事件去重/重连说明及已知限制。
 - [ ] 阅读并保存目标 NapCatQQ 版本的官方部署、登录、网络、反向 WebSocket/HTTP（以适配器文档要求为准）、升级与故障恢复文档。
@@ -86,8 +86,8 @@
 
 - [ ] 按锁定的 MaiBot 1.0.12 官方 Docker/Compose 指引部署，不自行修改核心源码来实现本 PRD 的业务规则。
 - [ ] 使用 MaiBot 官方支持的配置格式初始化实例，并将部署配置与运行期数据分离保存。
-- [ ] 配置 **三家供应商直连**：① DeepSeek（chat/推理，`api.deepseek.com`）；② Qwen-VL（vision 首选，DashScope）；③ 火山引擎豆包（embedding 首选 `doubao-embedding-vision` + vision 备选豆包视觉）。均通过 MaiBot `client_type="openai"` 的 OpenAI 兼容接口接入（grilling q6/q37/q52/q69-q71）；记录模型名称、版本、上下文窗口、区域、费用上限和数据保留政策。
-- [ ] 配置 vision 降级策略：以锁定版官方配置参考核验 `model_list`、`selection_strategy`、模型标识和兼容端点后，再实现 Qwen-VL 主用、豆包视觉回退；embedding 固定用豆包 `doubao-embedding-vision`，切换模型或维度前重建 A_Memorix 全量索引。
+- [ ] M1 只配置 DashScope 的 Qwen-VL（与既有 DeepSeek 一起运行），并记录模型名称、版本、上下文窗口、区域、费用上限和数据保留政策。
+- [ ] M2 再配置 DashScope Qwen embedding：以锁定版官方配置参考核验模型标识、兼容端点和供应商实际维度；切换 embedding 模型或维度前重建 A_Memorix 全量索引。
 - [ ] 验证 MaiBot 的 WebUI、日志、Planner、Replyer 与必要的插件运行时；v1 不启用 Tool Calling/MCP 或任何业务工具，只验证它们未获得越权能力。
 - [ ] 设置 WebUI 管理 Token 与最小权限；轮换初始凭据并验证普通群成员不能访问管理接口。
 - [ ] 在 WebUI、受控日志或等效审计界面中保留回复/等待决策、知识召回、记忆来源、错误原因和相关消息 ID 的查询能力；不假设所有字段均由 WebUI 原生展示。
@@ -112,7 +112,7 @@
 ## A_Memorix、知识库与记忆治理（v1 基础）
 
 - [ ] 根据目标 MaiBot 1.0.12 的 A_Memorix 官方配置参考部署其依赖、存储、索引与持久化路径。
-- [ ] M1 仅加载 embedding 模型，不启用 A_Memorix；M2 再验证段落、来源、向量/检索和会话作用域。人物事实、群摘要和其他自动写回不属于 M1；实体/关系/图谱、复杂摘要、衰减/强化/冻结等按锁定版本实际能力分批启用。无备份场景不得把“恢复能力”列为 v1 承诺。
+- [ ] M1 不加载 embedding 模型，也不启用 A_Memorix；M2 再加载并验证 Qwen embedding，以及段落、来源、向量/检索和会话作用域。人物事实、群摘要和其他自动写回不属于 M1；实体/关系/图谱、复杂摘要、衰减/强化/冻结等按锁定版本实际能力分批启用。无备份场景不得把“恢复能力”列为 v1 承诺。
 - [ ] 将内容明确分为 L0 核心人格、L1 静态金融知识、L2 群聊情境、L3 用户事实和 L4 关系记忆；L5 为 v2 实时数据的预留概念，v1 不产生或注入 L5 内容，禁止混存。
 - [ ] 配置 v1 单次回复的上下文顺序：安全/权限、L0 人格、会话行为规则、主题识别、L1 检索、群聊摘要/Episode、L3/L4、最近消息、当前不可信用户输入；仅在 v2 启用实时工具后，才在末尾追加已标注可信边界的 L5 工具结果。
 - [ ] 建立 `common`、`a_share`、`us_equity`、`crypto`、`futures`、`options`、`portfolio_risk`、`regulation` 八个金融资料域的元数据 schema；M2 只导入 `common` 与 `crypto` 的机制科普资料，其余域在 M2 后逐域启用。
@@ -183,10 +183,10 @@
 
 ## M1（模型与多模态就绪）完成定义
 
-- [ ] `./scripts/start.sh m1` 可生成并预检 M1 配置，加载 DeepSeek、Qwen-VL、豆包视觉和豆包 embedding。
-- [ ] Qwen-VL 为 VLM 首选，豆包视觉为 `sequential` 回退；一张预先约定的非敏感图片可完成成功和回退路径验证。
-- [ ] 豆包 embedding 模型 ID 与供应商确认的实际维度一致，变更任一项会触发 M2 索引重建要求。
-- [ ] M1 保持 A_Memorix 插件、检索工具、人物画像注入和自动记忆写回关闭；不导入金融资料、不创建金融向量索引。
+- [ ] `./scripts/start.sh m1` 可生成并预检 M1 配置，且只加载 DeepSeek 与 Qwen-VL，不加载 embedding。
+- [ ] 一张预先约定的非敏感图片可由 Qwen-VL 完成解析。
+- [ ] M1 保持 A_Memorix 插件、检索工具、人物画像注入、embedding 和自动记忆写回关闭；不导入金融资料、不创建金融向量索引。
+- [ ] Qwen embedding 模型 ID 与供应商确认的实际维度是 M2 的前置配置；变更 embedding 模型或维度会触发 M2 索引重建要求。
 - [ ] `steal_emoji = false` 保持不变；表情包收集不是 M1 必须项。
 
 ## M2（首个可用版本）完成定义

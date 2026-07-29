@@ -4,7 +4,7 @@
 
 本仓库目前是 MaiBot 跨市场金融研究与风险教育助手的文档与部署配置仓库，不是 MaiBot 上游源码仓库。目标是在 Debian VM 上通过 Docker Compose 运行 MaiBot 1.0.12、MaiBot-Napcat-Adapter 与 NapCat，服务一个 allowlist 中的私有 QQ 群。
 
-首个可用交付按 M0 -> M1 -> M2 推进：**M0 已于 2026-07-29 完成真实验证**，即 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复的最小闭环。M1 验证 Qwen-VL、豆包视觉顺序回退与豆包 embedding 的模型配置和安全图片解析，不导入金融资料，也不因 embedding 测试自动写入人物事实或群摘要。M2 才导入元数据、许可证和 SHA-256 均通过自动校验的 `common` 与 `crypto` 机制科普资料，验证静态检索、来源追溯与金融风险教育边界；不以人工审核或主观确认作为资料准入或上线门槛。之后才扩展其余静态资料域。实时数据、交易能力、聚合模型网关、完整记忆治理和完整 Runbook 均不属于 v1。
+首个可用交付按 M0 -> M1 -> M2 推进：**M0 已于 2026-07-29 完成真实验证**，即 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复的最小闭环。模型仅直连 DeepSeek（chat/推理）与 DashScope Qwen（VLM、embedding）。M1 仅验证 Qwen-VL 的模型配置和安全图片解析，不导入金融资料，也不加载 embedding 或自动人物事实/群摘要写回。M2 再配置 Qwen embedding，并导入元数据、许可证和 SHA-256 均通过自动校验的 `common` 与 `crypto` 机制科普资料，验证静态检索、来源追溯与金融风险教育边界；不以人工审核或主观确认作为资料准入或上线门槛。之后才扩展其余静态资料域。实时数据、交易能力、聚合模型网关、完整记忆治理和完整 Runbook 均不属于 v1。
 
 ## 文档优先级
 

@@ -40,7 +40,7 @@ NapCat 的 WebUI 使用 `.env` 中的 `NAPCAT_WEBUI_TOKEN`。其上游会在 std
 
 ## M1：模型与多模态就绪
 
-M1 需要确认 `.env` 中的 Qwen-VL、豆包视觉与豆包 embedding 项，使用一张预先约定的非敏感图片验证视觉解析，以及确认 embedding 模型的供应商实际维度。M1 不导入金融资料、不启用金融检索，也不应为测试 embedding 自动写入人物事实或群摘要。
+M1 只需确认 `.env` 中的 Qwen-VL 项，并用一张预先约定的非敏感图片验证视觉解析。M1 不加载 embedding；也不导入金融资料、不启用金融检索或自动记忆写回。M2 再使用同一 DashScope 提供商配置 Qwen embedding。
 
 M1 已提供独立配置、启动参数和预检，可执行：
 
@@ -48,7 +48,7 @@ M1 已提供独立配置、启动参数和预检，可执行：
 ./scripts/start.sh m1
 ```
 
-它加载视觉与 embedding 模型，但保持 A_Memorix 插件、检索工具、人物画像注入和自动记忆写回关闭；不会导入金融资料或创建金融向量索引。
+它只加载 Qwen-VL，保持 A_Memorix 插件、检索工具、人物画像注入、embedding 和自动记忆写回关闭；不会导入金融资料或创建金融向量索引。
 
 ## M2：静态金融知识与检索
 
