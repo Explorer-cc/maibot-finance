@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the metadata and checksum of an M2 static-knowledge manifest."""
+"""Validate the metadata and checksum of an M3 static-knowledge manifest."""
 
 from __future__ import annotations
 

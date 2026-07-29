@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline checks for the MaiBot M0/M1/M2 deployment files."""
+"""Offline checks for the MaiBot M0/M1/M2 configuration-baseline files."""
 
 from __future__ import annotations
 
@@ -100,8 +100,8 @@ def main() -> int:
 
     if bot.get("bot", {}).get("platform") != "qq":
         fail("bot.platform 必须为 qq")
-    if bot.get("chat", {}).get("reply_timing", {}).get("talk_value") != 0.75:
-        fail("talk_value 必须为 0.75")
+    if bot.get("chat", {}).get("reply_timing", {}).get("talk_value") != 0.8:
+        fail("talk_value 必须为 0.8")
     if bot.get("personality", {}).get("multiple_probability") != 0:
         fail("multiple_probability 必须为 0")
     if bot.get("chat", {}).get("reply_timing", {}).get("mentioned_bot_reply") is not True:
@@ -110,8 +110,8 @@ def main() -> int:
         fail("inevitable_at_reply 必须为 true")
     if bot.get("chat", {}).get("reply_timing", {}).get("reply_trigger_mode") != "reply_necessity":
         fail("reply_trigger_mode 必须为 reply_necessity")
-    if bot.get("chat", {}).get("reply_style", {}).get("enable_reply_quote") is not True:
-        fail("enable_reply_quote 必须为 true")
+    if bot.get("chat", {}).get("reply_style", {}).get("enable_reply_quote") is not False:
+        fail("enable_reply_quote 必须为 false")
     if bot.get("chat", {}).get("reply_timing", {}).get("max_consecutive_wait_count") != 3:
         fail("max_consecutive_wait_count 必须为 3")
     if bot.get("chat", {}).get("reply_timing", {}).get("no_action_backoff_base_seconds") != 30:
@@ -173,8 +173,8 @@ def main() -> int:
         fail("expression.learning_list 必须只允许生产群使用并学习原生表达库")
     if bot.get("expression", {}).get("expression_checked_only") is not False:
         fail("expression_checked_only 必须为 false")
-    if bot.get("expression", {}).get("expression_self_reflect") is not False:
-        fail("expression_self_reflect 必须为 false")
+    if bot.get("expression", {}).get("expression_self_reflect") is not True:
+        fail("expression_self_reflect 必须为 true")
     if bot.get("expression", {}).get("expression_selection_mode") != "vector":
         fail("expression_selection_mode 必须为 vector")
     if bot.get("expression", {}).get("expression_vector_candidate_pool_size") != 20:
@@ -229,16 +229,16 @@ def main() -> int:
     if adapter.get("filters", {}).get("ignore_self_message") is not True:
         fail("必须过滤机器人自身消息")
     if adapter.get("napcat_server", {}).get("host") != "napcat":
-        fail("适配器必须通过内部 napcat 服务连接")
+        fail("适配器必须直接连接内部 napcat 服务")
     prompts = bot.get("chat", {}).get("reply_style", {}).get("chat_prompts", [])
     if not isinstance(prompts, list) or len(prompts) != 1:
         fail("必须只配置唯一生产群的行为提示")
     group_prompt = prompts[0].get("prompt", "")
-    if not all(term in group_prompt for term in ("具体标的", "买卖时点", "仓位", "交易操作建议")):
-        fail("生产群提示必须拒绝具体投资建议和交易操作建议")
+    if "激进的投资策略煽动群聊" not in group_prompt:
+        fail("生产群提示必须包含已保存的激进投资风格规则")
     names = {item.get("name") for item in model.get("models", [])}
-    if "deepseek-chat" not in names:
-        fail("M0 需要 deepseek-chat")
+    if "deepseek-v4-flash" not in names:
+        fail("M0 需要 deepseek-v4-flash")
     tasks = model.get("model_task_config", {})
     if args.phase == "m1":
         if bot.get("emoji", {}).get("steal_emoji") is not True:
@@ -248,7 +248,7 @@ def main() -> int:
         for name in ("qwen-vl", "qwen-embedding"):
             if name not in names:
                 fail(f"M1 缺少模型：{name}")
-        if names != {"deepseek-chat", "qwen-vl", "qwen-embedding"}:
+        if names != {"deepseek-v4-flash", "qwen-vl", "qwen-embedding"}:
             fail("M1 只能加载 DeepSeek、Qwen-VL 与 Qwen embedding")
         provider_names = {item.get("name") for item in model.get("api_providers", [])}
         if provider_names != {"DeepSeek", "DashScope"}:
@@ -263,7 +263,7 @@ def main() -> int:
         for name in ("qwen-vl", "qwen-embedding"):
             if name not in names:
                 fail(f"M2 缺少模型：{name}")
-        if names != {"deepseek-chat", "qwen-vl", "qwen-embedding"}:
+        if names != {"deepseek-v4-flash", "qwen-vl", "qwen-embedding"}:
             fail("M2 只能加载 DeepSeek、Qwen-VL 与 Qwen embedding")
         provider_names = {item.get("name") for item in model.get("api_providers", [])}
         if provider_names != {"DeepSeek", "DashScope"}:
@@ -272,23 +272,21 @@ def main() -> int:
             fail("M2 的 VLM 必须只配置 Qwen-VL")
         if tasks.get("embedding", {}).get("model_list") != ["qwen-embedding"]:
             fail("M2 的 embedding 必须显式选择 qwen-embedding")
-    if args.phase == "m2":
+    if args.phase in ("m1", "m2"):
         if bot.get("a_memorix", {}).get("plugin", {}).get("enabled") is not True:
-            fail("M2 必须启用 A_Memorix")
+            fail(f"{args.phase.upper()} 必须启用 A_Memorix")
         integration = bot.get("a_memorix", {}).get("integration", {})
         if any(integration.get(key) is not True for key in (
             "enable_memory_query_tool",
             "enable_person_profile_query_tool",
             "enable_person_profile_injection",
+            "heuristic_memory_recall_enabled",
+            "chat_summary_writeback_enabled",
+            "person_fact_writeback_enabled",
         )):
-            fail("M2 必须启用 A_Memorix 的基础检索与画像集成")
-        embedding = bot.get("a_memorix", {}).get("embedding", {})
-        if embedding.get("model_name") != "qwen-embedding":
-            fail("M2 的 A_Memorix 必须显式选择 qwen-embedding")
-        if embedding.get("dimension") != int(env["QWEN_EMBEDDING_DIMENSION"]):
-            fail("M2 的 A_Memorix embedding 维度必须与 .env 一致")
-        if embedding.get("dimension_request_mode") != "explicit":
-            fail("M2 的 embedding 维度请求模式必须为 explicit")
+            fail(f"{args.phase.upper()} 必须启用 A_Memorix 的查询、画像与自动写回集成")
+        if integration.get("memory_query_default_limit") != 8:
+            fail("A_Memorix memory_query_default_limit 必须为 8")
     else:
         if args.phase == "m0" and bot.get("emoji", {}).get("steal_emoji") is not False:
             fail("M0 不得启用表情包收集")

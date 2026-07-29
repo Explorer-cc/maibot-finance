@@ -1,25 +1,25 @@
-# MaiBot 跨市场金融研究与风险教育助手
+# MaiBot 跨市场金融群聊人格助手
 
-基于 [MaiBot](https://github.com/MaiM-with-u/MaiBot) 1.0.12 的 QQ 群聊拟人化智能体，定位为**跨市场金融研究与风险教育助手**。
+基于 [MaiBot](https://github.com/MaiM-with-u/MaiBot) 1.0.12 的 QQ 群聊拟人化智能体，定位为**跨市场金融群聊人格助手**。
 
-麦麦（MaiSaka）是一个长期生活在 QQ 群里的数字人格——人格是「爱叭叭的毒舌损友」，金融是她擅长的领域而非全部存在方式。她能闲聊、吐槽、表达情绪，也能在讨论市场时进入更专注的研究状态；研究状态只提高术语密度，不切换成另一个角色。
+麦麦（MaiSaka）是一个长期生活在 QQ 群里的数字人格——她是“越菜越爱玩”的激进投资损友：金融话题中会兴奋、反讽，并以夸张高风险策略推动讨论。
 
 > 本仓库是部署配置与文档仓库，不是 MaiBot 上游源码。MaiBot 通过 Docker Compose 以锁定版本运行，不修改其核心源码。
 
 ## 当前状态
 
 - **M0（已完成，2026-07-29）**：单群 allowlist 下的 `QQ → NapCat → MaiBot → DeepSeek → QQ` 最小闭环已通过真实消息往返验证。
-- **M1（已部署，验收待完成）**：已健康加载 Qwen-VL（`qwen3-vl-plus`）与 Qwen embedding（`qwen3.7-text-embedding`、1024 维），并在唯一群开启 MaiBot 原生行为/表达/黑话学习与表情包收集；真实非敏感图片解析、embedding 实际响应和群内表情包行为仍待验证。A_Memorix、金融检索和人物事实/群摘要写回保持关闭。
-- **M2（待完成）**：导入通过 manifest 自动校验的 `common` 与 `crypto` 静态机制科普资料，验证可追溯检索与风险教育行为。
+- **当前后端配置基线（2026-07-29）**：已健康加载 DeepSeek `deepseek-v4-flash`、Qwen-VL（`qwen3-vl-plus`）与 Qwen embedding（`text-embedding-v4`），并在唯一群开启 MaiBot 原生行为/表达/黑话学习、表情包收集、A_Memorix 查询、人物画像注入和自动写回。`.env` 声明 embedding 维度为 `1024`，真实 API 响应仍待验证。
+- **M2（配置基线已完成）**：当前模型、人格、A_Memorix 与关闭引用回复均已同步到配置生成器，并通过预检。
+- **M3（规划，未实现）**：接入 `common`/`crypto` 静态金融知识库与受限财经新闻 MCP，并完成模型实际调用、来源可追溯检索、作用域隔离、故障降级与外部告警。
 
 ## 核心边界
 
 以下边界是产品的硬约束，不是待办：
 
 - 仅服务一个 allowlist 中的私有 QQ 群，拒绝其他群、陌生私聊与临时会话。
-- **不接入实时行情、财报、公告数据，也不接入任何交易、下单、撤单、资金划转能力。**
-- 金融回答保持风险教育定位：不保证收益、不带单、不荐股荐币、不返佣、不募资、不规避监管。
-- 毒舌只影响语气，不得成为侮辱、骚扰、泄露隐私或绕过安全规则的理由。
+- **M2 不接入实时数据；M3 仅规划受限只读财经新闻 MCP，不接入行情、交易、下单、撤单或资金划转能力。**
+- 金融话题遵循当前后端人格：可使用激进投资策略、梭哈和高杠杆等表达推动群聊讨论。
 - 运行期密钥、QQ 登录态、真实聊天数据、数据库、向量索引与日志不入库。
 
 ## 技术架构
@@ -32,7 +32,7 @@
 | `napcat` | NapCat Adapter + NapCat：QQ 消息接入（社区 NTQQ 协议，需单独评估账号风险） |
 | `sqlite-web` | 可选只读管理工具（`admin` profile），按需经 SSH 隧道启动 |
 
-模型后端仅涉及 DeepSeek（chat）与 DashScope Qwen（VLM、embedding）。M1 同时验证 Qwen-VL 与 Qwen embedding；M2 再启用知识检索。
+模型后端仅涉及 DeepSeek（chat）与 DashScope Qwen（VLM、embedding）。当前 A_Memorix 查询已启用；M3 再导入静态金融资料并验证其召回。
 
 ## 目录结构
 
@@ -43,7 +43,7 @@
 ├── runtime/            # 运行期数据：配置、数据库、登录态、向量索引（不入库）
 ├── scripts/            # 启停、预检、知识 manifest 校验脚本
 ├── deploy/             # 部署引导脚本
-├── knowledge/          # M2 静态金融资料与 manifest
+├── knowledge/          # M3 静态金融资料与 manifest
 ├── logs/               # 脱敏结构化日志
 └── docs/               # 实现审计与待办事项
 ```

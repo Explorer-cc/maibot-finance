@@ -8,7 +8,7 @@
 
 - 仅在本机端口冲突时修改 `WEBUI_PORT`、`NAPCAT_WEBUI_PORT` 或 `SQLITE_WEB_PORT`；保持 Compose 的 `127.0.0.1` 绑定，并同步调整 SSH 隧道命令。
 - 不将镜像改为 tag、`latest` 或未经审计的 digest；升级须重新核验 MaiBot 版本、镜像 digest、配置迁移与 Adapter 兼容性。
-- 不在 `.env` 中加入实时数据、交易、MCP、普通私聊或第二个群的配置；当前生成器会固定关闭/拒绝这些能力。
+- 不在 M2 的 `.env` 中加入实时数据、交易、MCP、普通私聊或第二个群的配置；当前生成器会固定关闭/拒绝这些能力。M3 的财经新闻 MCP 另行设计，不提前写入模板。
 
 ## M0：必须填写的 `.env` 项
 
@@ -39,30 +39,30 @@ M1 已在 M0 往返验证后部署。DashScope 凭据、工作空间 OpenAI 兼�
 | 类别 | `.env` 项 | 配置要求 |
 | --- | --- | --- |
 | Qwen-VL | `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL`、`QWEN_VL_MODEL` | 已配置 DashScope 工作空间 OpenAI 兼容端点和 `qwen3-vl-plus`；不得在文档中记录 key。 |
-| Qwen embedding | `QWEN_EMBEDDING_MODEL`、`QWEN_EMBEDDING_DIMENSION` | 已配置 `qwen3.7-text-embedding` 和 `1024`；须以实际返回核对维度。变更任一项前必须计划 A_Memorix 全量索引重建。 |
+| Qwen embedding | `QWEN_EMBEDDING_MODEL`、`QWEN_EMBEDDING_DIMENSION` | 已配置 `text-embedding-v4`，`.env` 声明维度为 `1024`；须以实际返回核对维度。变更任一项前必须计划 A_Memorix 全量索引重建。 |
 
-M1 的剩余验收需要一张预先约定、无敏感信息且允许发送给模型的测试图片。将图片与问题附在同一条群消息中，验证 Qwen-VL 解析，并记录 Qwen embedding 的模型 ID 与实际响应维度；引用旧消息中的图片不是可靠的视觉输入验证。还需在唯一 allowlist 群验证 MaiBot 原生行为/表达/黑话学习与表情包收集；三类学习均 `use = true`、`learn = true`，`steal_emoji = true` 并保持 `content_filtration = true`，且 `enable_rich_reply = true` 只使用 MaiBot 既有的图片、表情包和 @ 附加能力。M1 不导入金融资料、不创建金融向量索引，也不启用群摘要或人物事实自动写回，更不新增自定义媒体存储、清理、限额或回复逻辑。
+当前后端配置的剩余验收需要一张预先约定、无敏感信息且允许发送给模型的测试图片。将图片与问题附在同一条群消息中，验证 Qwen-VL 解析，并记录 Qwen embedding 的模型 ID 与实际响应维度；引用旧消息中的图片不是可靠的视觉输入验证。唯一 allowlist 群已启用 MaiBot 原生行为/表达/黑话学习与表情包收集；三类学习均 `use = true`、`learn = true`，`steal_emoji = true` 并保持 `content_filtration = true`，且 `enable_rich_reply = true` 只使用 MaiBot 既有的图片、表情包和 @ 附加能力。A_Memorix 查询、人物画像注入、群摘要和人物事实自动写回也已启用；仍不导入金融资料或创建金融向量索引。
 
-**当前状态：** `scripts/start.sh m1` 已完成配置生成、预检和部署；Core 健康加载 Qwen-VL 与 Qwen embedding，并在唯一群通过 MaiBot 原生行为/表达/黑话学习和 `steal_emoji` 启用表情包收集，同时保持 A_Memorix 插件、检索工具、人物画像注入和人物事实/群摘要写回关闭。真实图片、embedding 和表情包链路测试仍待执行，不必运行 `m2`。
+**当前状态：** 后端保存的配置已同步到 `deploy/bootstrap.py` 与 `scripts/preflight.py`；Core 健康加载 DeepSeek `deepseek-v4-flash`、Qwen-VL 与 Qwen embedding，并在唯一群通过 MaiBot 原生行为/表达/黑话学习和 `steal_emoji` 启用表情包收集，同时启用 A_Memorix 插件、检索工具、人物画像注入和人物事实/群摘要写回。真实图片、embedding 和表情包链路测试仍待执行。
 
-## M2：静态金融知识与检索所需资料
+## M2：配置与离线验收（已完成）
 
-M2 以完成 M1 验收为前提，复用 M1 已验证的 DashScope Qwen embedding 模型 ID 与实际维度。随后仅导入 `common` 与 `crypto` 机制科普资料；每份文件须通过 `scripts/validate_knowledge_manifest.py`，再由运营者经 SSH 隧道后的 WebUI 导入并记录来源召回验证。资料准入不要求人工审核。
+M2 复用当前 DashScope Qwen embedding 配置；运行 `./scripts/start.sh m2` 会重建 Core，使其读取 M2 配置，但不会重启 NapCat。
 
-M2 没有新的模型 `.env` 项：复用 M1 的 `QWEN_EMBEDDING_MODEL` 与 `QWEN_EMBEDDING_DIMENSION`；M2 的新增输入是 `knowledge/` 下的资料和 manifest。
+M2 没有新的模型 `.env` 项：复用当前的 `QWEN_EMBEDDING_MODEL` 与 `QWEN_EMBEDDING_DIMENSION`。
 
 | 类别 | 位置 | 配置要求 |
 | --- | --- | --- |
-| 静态知识 | `knowledge/` 中的资料与相邻 manifest | 资料与 manifest 须通过来源 HTTPS、许可证、允许域、日期和 SHA-256 自动校验；不得导入群消息、模型输出、实时行情或未经许可的抓取内容。 |
+| 静态知识 | `knowledge/` 中的资料与相邻 manifest | M3 资料与 manifest 须通过来源 HTTPS、许可证、允许域、日期和 SHA-256 自动校验；不得导入群消息、模型输出、实时行情或未经许可的抓取内容。 |
 
-## M2：当前不能靠填写 `.env` 完成的门槛
+## M3：金融知识库与财经新闻 MCP 所需输入（未实现）
 
-以下项目不是现有 MaiBot 1.0.12 或 Adapter 的环境变量，也尚未由仓库实现；在补齐并验收前，不能把 M2 视为完成：
+以下项目不随 M2 配置基线完成，属于 M3 的金融知识库与财经新闻 MCP 规划：
 
-- [ ] 受控的外层出站硬限流：唯一生产群每分钟最多 5 条，连续 3 条后强制冷却 30 秒。`talk_value=0.75`、`max_consecutive_wait_count` 与空闲退避只影响回复决策，不能替代硬限流。
-- [ ] 运营者可仅经 SSH 隧道后的 WebUI token 执行暂停 QQ 入站/出站、关闭主动发言和紧急停机，并验证不会删除运行期数据；群聊消息不能触发这些操作。
-- [ ] 登录失效、频繁验证、发送受限、冻结提示、重复事件和 Adapter 异常的可审计告警与最小处置卡。
-- [ ] `common` 与 `crypto` 的来源追溯、召回、基础作用域隔离、无实时行情声明和高风险金融请求拒绝测试。
+- [ ] 验证 Qwen-VL、Qwen embedding 与表情包收集的真实响应；核对 embedding 实际维度。
+- [ ] 提供 `common` 与 `crypto` 资料及相邻 manifest；每份资料通过 `scripts/validate_knowledge_manifest.py` 后导入并验证来源追溯、召回、基础作用域隔离、无实时行情声明和当前激进金融人格一致性。
+- [ ] 确定财经新闻 MCP 的固定来源、授权/使用条款、只读新闻查询范围、鉴权方式、速率/超时和来源时间字段；不得提供行情、交易或账户功能。
+- [ ] 接入登录失效、频繁验证和平台冻结的外部可审计告警，并验证最小处置卡。
 
 ## 已核验的实现事实（2026-07-28）
 

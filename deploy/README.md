@@ -16,7 +16,7 @@ cp .env.example .env
 ./scripts/start.sh m0
 ```
 
-逐项配置要求与外部控制台操作见 [`docs/open-items.md`](../docs/open-items.md)。除填写 M0 的 `.env` 项外，还必须生成三个彼此不同的 token：Core WebUI、NapCat WebUI 和 NapCat 正向 WebSocket。不配置 QQ 管理员身份或 QQ 维护命令；管理只经 SSH 隧道后的 WebUI token 进行。不要在 `.env` 中额外开启第二个群、普通私聊、MCP、实时数据或交易能力。
+逐项配置要求与外部控制台操作见 [`docs/open-items.md`](../docs/open-items.md)。除填写 M0 的 `.env` 项外，还必须生成三个彼此不同的 token：Core WebUI、NapCat WebUI 和 NapCat 正向 WebSocket。不配置 QQ 管理员身份或 QQ 维护命令；管理只经 SSH 隧道后的 WebUI token 进行。M2 不额外开启第二个群、普通私聊、MCP、实时数据或交易能力；M3 的财经新闻 MCP 另行设计与验收。
 
 `bootstrap.py` 会将实际 `.env` 权限收紧为 `0600`；不要把它复制到 Git、工单、聊天记录或 WebUI 配置导出中。
 
@@ -40,7 +40,7 @@ NapCat 的 WebUI 使用 `.env` 中的 `NAPCAT_WEBUI_TOKEN`。其上游会在 std
 
 ## M1：模型与多模态就绪
 
-M1 已于 2026-07-29 部署：运行配置预检通过，Core 健康加载 DeepSeek、Qwen-VL（`qwen3-vl-plus`）和 Qwen embedding（`qwen3.7-text-embedding`、1024 维）。M1 在唯一群通过原生行为/表达/黑话学习与 `steal_emoji = true` 启用表情包收集且保持内容过滤；不导入金融资料、不启用金融检索或人物事实/群摘要写回，也不增加自定义媒体功能。
+当前后端配置基线已于 2026-07-29 同步到生成器：Core 健康加载 DeepSeek `deepseek-v4-flash`、Qwen-VL（`qwen3-vl-plus`）和 Qwen embedding（`text-embedding-v4`）。唯一群通过原生行为/表达/黑话学习与 `steal_emoji = true` 启用表情包收集，同时启用 A_Memorix 查询、人物画像注入、群摘要和人物事实自动写回；未导入金融资料或创建金融向量索引。
 
 后续重建 M1 配置仍使用：
 
@@ -48,19 +48,23 @@ M1 已于 2026-07-29 部署：运行配置预检通过，Core 健康加载 DeepS
 ./scripts/start.sh m1
 ```
 
-该命令加载 Qwen-VL 与 Qwen embedding，并启用 MaiBot 原生行为/表达/黑话学习和表情包收集；保持 A_Memorix 插件、检索工具、人物画像注入和人物事实/群摘要写回关闭，不会导入金融资料、创建金融向量索引或增加自定义媒体功能。
+该命令加载 DeepSeek、Qwen-VL 与 Qwen embedding，并启用 MaiBot 原生行为/表达/黑话学习、表情包收集、A_Memorix 查询、人物画像注入、群摘要和人物事实自动写回；不会导入金融资料、创建金融向量索引或增加自定义媒体功能。
 
-启动脚本会在生成配置后仅使用 Docker Compose 原生命令重建 `core`，让其读取新的模型配置；不会重启保持 QQ 登录态的 `napcat`。部署并不等同于验收：仍须在唯一 allowlist 群发送“图片与问题在同一消息中”的非敏感测试图片，核对图片理解、Qwen embedding 实际响应与 1024 维，以及 MaiBot 原生表情包收集行为。引用旧消息中的图片不作为可靠的视觉输入验收方式。
+启动脚本会在生成配置后仅使用 Docker Compose 原生命令重建 `core`，让其读取新的模型配置；不会重启保持 QQ 登录态的 `napcat`。部署并不等同于验收：仍须在唯一 allowlist 群发送“图片与问题在同一消息中”的非敏感测试图片，核对图片理解、Qwen embedding 实际响应与 `.env` 声明的 1024 维，以及 MaiBot 原生表情包收集行为。引用旧消息中的图片不作为可靠的视觉输入验收方式。
 
-## M2：静态金融知识与检索
+## M2：配置与离线验收基线
 
-M2 以前需完成 M1 验收，并为 `common` 与 `crypto` 资料完成 manifest 自动校验。资料准入不要求人工审核。M2 不会开启实时行情、交易、MCP 或普通私聊。所有变更先运行：
+M2 已完成配置基线：当前模型、人格、A_Memorix 与关闭引用回复已同步到生成器；使用 `scripts/preflight.py --phase m2` 检查配置一致性。
 
 ```bash
 .venv/bin/python scripts/preflight.py --phase m2 --compose
 ```
 
-这只验证已生成配置的结构和 Compose 渲染，不等同于 M2 验收。执行 M2 前还必须完成 `docs/open-items.md` 中的外层硬限流、受限暂停/停机、告警和知识检索测试门槛；这些能力不能通过修改 `.env` 获得。
+`./scripts/start.sh m2` 会重建 Core，使其读取 M2 配置；不会重启 NapCat。
+
+## M3：金融知识库与财经新闻 MCP（规划，未实现）
+
+M3 拟验证模型实际调用和媒体行为；随后为 `common` 与 `crypto` 资料完成 manifest 自动校验、导入、可追溯检索、作用域隔离、故障降级与外部告警验证，并接入受限只读财经新闻 MCP。该 MCP 必须固定来源、返回来源与时间标记，且不提供行情、交易、账户、文件、Shell、Docker 或群管理能力。资料准入不要求人工审核。
 
 ## 运维
 
