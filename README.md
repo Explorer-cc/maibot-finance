@@ -9,7 +9,7 @@
 ## 当前状态
 
 - **M0（已完成，2026-07-29）**：单群 allowlist 下的 `QQ → NapCat → MaiBot → DeepSeek → QQ` 最小闭环已通过真实消息往返验证。
-- **M1（待完成）**：仅接入并验证 Qwen-VL 的非敏感图片解析；A_Memorix、金融检索、embedding 和自动记忆写回保持关闭。
+- **M1（待完成）**：接入并验证 Qwen-VL 的非敏感图片解析、图片/表情包保存与适度回复，以及 Qwen embedding 的模型 ID/实际维度；A_Memorix、金融检索和自动记忆写回保持关闭。
 - **M2（待完成）**：导入通过 manifest 自动校验的 `common` 与 `crypto` 静态机制科普资料，验证可追溯检索与风险教育行为。
 
 ## 核心边界
@@ -32,7 +32,7 @@
 | `napcat` | NapCat Adapter + NapCat：QQ 消息接入（社区 NTQQ 协议，需单独评估账号风险） |
 | `sqlite-web` | 可选只读管理工具（`admin` profile），按需经 SSH 隧道启动 |
 
-模型后端仅涉及 DeepSeek（chat）与 DashScope Qwen（VLM、embedding）。M1 只启用 Qwen-VL；M2 再启用 Qwen embedding。
+模型后端仅涉及 DeepSeek（chat）与 DashScope Qwen（VLM、embedding）。M1 同时验证 Qwen-VL 与 Qwen embedding；M2 再启用知识检索。
 
 ## 目录结构
 

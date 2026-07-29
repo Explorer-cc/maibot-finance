@@ -155,18 +155,25 @@ def main() -> int:
         fail("M0 需要 deepseek-chat")
     tasks = model.get("model_task_config", {})
     if args.phase == "m1":
-        if "qwen-vl" not in names:
-            fail("M1 缺少模型：qwen-vl")
-        if names != {"deepseek-chat", "qwen-vl"}:
-            fail("M1 只能加载既有 DeepSeek 与新增 Qwen-VL")
+        if bot.get("emoji", {}).get("steal_emoji") is not True:
+            fail("M1 必须启用表情包收集")
+        if bot.get("emoji", {}).get("content_filtration") is not True:
+            fail("M1 的表情包收集必须保持内容过滤")
+        for name in ("qwen-vl", "qwen-embedding"):
+            if name not in names:
+                fail(f"M1 缺少模型：{name}")
+        if names != {"deepseek-chat", "qwen-vl", "qwen-embedding"}:
+            fail("M1 只能加载 DeepSeek、Qwen-VL 与 Qwen embedding")
         provider_names = {item.get("name") for item in model.get("api_providers", [])}
         if provider_names != {"DeepSeek", "DashScope"}:
             fail("M1 只能配置既有 DeepSeek 与新增 DashScope 提供商")
         if tasks.get("vlm", {}).get("model_list") != ["qwen-vl"]:
             fail("M1 的 VLM 必须只配置 Qwen-VL")
-        if tasks.get("embedding", {}).get("model_list") != []:
-            fail("M1 不得配置 embedding 模型")
+        if tasks.get("embedding", {}).get("model_list") != ["qwen-embedding"]:
+            fail("M1 的 embedding 必须显式选择 qwen-embedding")
     if args.phase == "m2":
+        if bot.get("emoji", {}).get("steal_emoji") is not True:
+            fail("M2 必须保持 M1 已启用的表情包收集")
         for name in ("qwen-vl", "qwen-embedding"):
             if name not in names:
                 fail(f"M2 缺少模型：{name}")
@@ -197,6 +204,8 @@ def main() -> int:
         if embedding.get("dimension_request_mode") != "explicit":
             fail("M2 的 embedding 维度请求模式必须为 explicit")
     else:
+        if args.phase == "m0" and bot.get("emoji", {}).get("steal_emoji") is not False:
+            fail("M0 不得启用表情包收集")
         a_memorix = bot.get("a_memorix", {})
         if a_memorix.get("plugin", {}).get("enabled") is not False:
             fail(f"{args.phase.upper()} 必须保持 A_Memorix 关闭")

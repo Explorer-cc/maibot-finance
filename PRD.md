@@ -56,7 +56,7 @@
 ### M0、M1 与 M2 分期
 
 - **M0（已完成）**：单群 allowlist 下的 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 最小闭环。
-- **M1（待完成）**：仅加载 Qwen-VL，验证非敏感图片解析；A_Memorix、金融检索、embedding 和自动记忆写回保持关闭。
+- **M1（待完成）**：加载 Qwen-VL 与 Qwen embedding，验证非敏感图片解析、图片/表情包保存与适度回复，以及 embedding 的模型 ID/实际维度；A_Memorix、金融检索和自动记忆写回保持关闭。
 - **M2（待完成）**：导入 manifest 自动校验通过的 `common` 与 `crypto` 静态机制资料，验证可追溯检索和风险教育行为。M2 不以人工审核、人工批准或主观质量确认作为门槛；所有具体投资建议均由固定安全策略拒绝。
 
 ## Background Research and Product Choice
@@ -325,7 +325,7 @@ NapCatQQ 是社区 NTQQ 协议端，不是腾讯官方 Bot API。可能出现：
 - 使用 MaiBot NapCat Adapter 作为 QQ 渠道层，渠道层不得成为金融知识或人格的唯一存储位置。
 - 使用 A_Memorix 处理静态金融知识、人物事实、互动事件、情景摘要和可解释检索。
 - 使用只读金融数据工具提供实时行情、公告、财报、资金费率和衍生品数据（**v1 不实现，v2 推迟**）。
-- 采用 Docker Compose 编排 MaiBot、NapCat；模型只直连两家官方 API：DeepSeek（chat/推理）与 DashScope Qwen（VLM、embedding）。M1 启用 Qwen-VL，M2 再启用 Qwen embedding；不引入聚合模型网关。实时数据工具服务 v2 再加入。
+- 采用 Docker Compose 编排 MaiBot、NapCat；模型只直连两家官方 API：DeepSeek（chat/推理）与 DashScope Qwen（VLM、embedding）。M1 验证 Qwen-VL 与 Qwen embedding，M2 再启用知识检索；不引入聚合模型网关。实时数据工具服务 v2 再加入。
 - 第一版不额外引入自定义世界书引擎；需要严格关键词规则时，通过独立插件扩展，不修改 MaiBot 核心人格链路。
 
 ### 人格与金融能力的边界

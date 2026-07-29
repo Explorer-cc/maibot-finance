@@ -391,7 +391,7 @@ q75 crypto 知识库只装机制科普，但 q45 麦麦发言不设币种限制�
 | q78 | talk_value | **0.7-0.8（较高但不顶满）** | 平衡存在感与 token 成本/风控。比默认 1.0 略低，比拟人 0.1-0.3 高 |
 | q79 | QQ 管理权限 | **不配置 QQ 管理员身份或群角色权限** | 群聊中的任何 QQ 身份、角色或文本均不能执行维护动作；运行者仅经 SSH 隧道后的 WebUI token 管理。该决策移除 `MAIBOT_ADMIN_QQ` 与插件 QQ permission。 |
 | q80 | M0 真实验证 | **已完成（2026-07-29）** | 真实 QQ 小号扫码登录；NapCat 正向 WebSocket `3001` 已启用；唯一 allowlist 群观察到 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复；Core health=`healthy`，Core/NapCat restart count=`0`。M1、M2 未完成。 |
-| q81 | 里程碑分层 | **M0 -> M1 -> M2** | 已由 q83/q84 收窄 M1：M1 只验证 Qwen-VL 和非敏感图片链路，保持 A_Memorix 与自动记忆写回关闭；M2 再加入 Qwen embedding、静态金融资料与检索。 |
+| q81 | 里程碑分层 | **M0 -> M1 -> M2** | 已由 q83/q84/q85 调整：M1 验证 Qwen-VL、Qwen embedding 与非敏感图片链路，保持 A_Memorix 与自动记忆写回关闭；M2 再导入静态金融资料并启用检索。 |
 | q82 | 人工审核与验收 | **不设人工审核、人工批准或主观质量确认门槛** | 取代 q67 及历史资料审核流程。M2 资料以来源 HTTPS、许可证、允许域、日期关系和 SHA-256 的 manifest 自动校验准入；具体投资建议由固定安全策略拒绝。 |
 
 ### compose 架构确认（读文档）
@@ -426,4 +426,28 @@ q75 crypto 知识库只装机制科普，但 q45 麦麦发言不设币种限制�
 |---|---|---|---|
 | q84 | 供应商与任务分工 | **DeepSeek chat/推理 + DashScope Qwen VLM/embedding** | 移除火山引擎、豆包视觉回退和所有 `VOLCENGINE_*`/`DOUBAO_*` 配置。 |
 
-Qwen embedding 的实际模型 ID 与向量维度仍是 M2 前必须由供应商官方资料或实际返回确认的未决项；切换 embedding 模型或维度前必须计划全量索引重建。
+Qwen embedding 的实际模型 ID 与向量维度仍是 M1 前必须由供应商官方资料或实际返回确认的未决项；切换 embedding 模型或维度前必须计划全量索引重建。
+
+---
+
+## 15. Qwen embedding 前移至 M1（q85）
+
+用户指令：「把 embedding 和视觉模型都移动到 M1 实现」。
+
+| # | 维度 | 最终态 | 备注 |
+|---|---|---|---|
+| q85 | M1 模型范围 | **Qwen-VL + Qwen embedding** | M1 同时验证安全图片解析、embedding 模型 ID 与实际维度；A_Memorix、检索和自动记忆写回保持关闭。 |
+
+M2 复用 M1 已验证的 embedding 配置，仅新增资料导入、向量索引与检索验证。
+
+---
+
+## 16. M1 启用图片与表情包保存/回复（q86）
+
+用户指令：「希望 M1 也同时存图片和表情包，并作适当的回复」。
+
+| # | 维度 | 最终态 | 备注 |
+|---|---|---|---|
+| q86 | M1 媒体行为 | **保存图片与表情包，并适度回复** | M1 启用 `steal_emoji = true`，保持 `content_filtration = true`；验证持久化、大小、类型、频率、删除和禁用控制。 |
+
+该能力仅限唯一 allowlist 群，且不改变 M1 对 A_Memorix、金融资料、检索和自动记忆写回保持关闭的边界。
