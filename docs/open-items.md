@@ -32,22 +32,22 @@
 - [x] 已在生产群以无敏感 `@麦麦` 触发样例确认 `QQ -> NapCat -> MaiBot -> DeepSeek -> QQ` 往返成功（2026-07-29）。跨群和私聊拒绝仍须按 `plan.md` 使用本地 fixture、受控测试路由或实现级测试验证，不新增真实会话。
 - [x] 已保存不含密钥或聊天正文的验证证据：执行日期、锁定版本/digest、实际模型 ID、WebUI health 状态、QQ 往返结果与异常情况（2026-07-29；见 `docs/implementation-audit.md`）。
 
-## M1：模型与多模态就绪所需配置
+## M1：模型与多模态就绪配置与验收
 
-M1 在 M0 往返验证通过后进行，接入 Qwen-VL 与 Qwen embedding。先在 DashScope 控制台或官方文档确认模型项；模型 ID 和 embedding 维度不能只因模板给出候选值而视为已验证。
+M1 已在 M0 往返验证后部署。DashScope 凭据、工作空间 OpenAI 兼容端点与下列模型值已写入被忽略的 `.env`，不在本文件重复密钥或端点；模型 ID 和维度仍须以实际 API 响应完成验收。
 
 | 类别 | `.env` 项 | 配置要求 |
 | --- | --- | --- |
-| Qwen-VL | `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL`、`QWEN_VL_MODEL` | 填 DashScope 官方兼容端点、可用 key 和实际 Qwen-VL 模型 ID。 |
-| Qwen embedding | `QWEN_EMBEDDING_MODEL`、`QWEN_EMBEDDING_DIMENSION` | 将模型 ID 与供应商实际返回/官方资料确认的维度成对填写；变更任一项前必须计划 A_Memorix 全量索引重建。 |
+| Qwen-VL | `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL`、`QWEN_VL_MODEL` | 已配置 DashScope 工作空间 OpenAI 兼容端点和 `qwen3-vl-plus`；不得在文档中记录 key。 |
+| Qwen embedding | `QWEN_EMBEDDING_MODEL`、`QWEN_EMBEDDING_DIMENSION` | 已配置 `qwen3.7-text-embedding` 和 `1024`；须以实际返回核对维度。变更任一项前必须计划 A_Memorix 全量索引重建。 |
 
-M1 的验收还需要一张预先约定、无敏感信息且允许发送给模型的测试图片，验证 Qwen-VL 解析成功和可理解的失败降级，并记录 Qwen embedding 的模型 ID 与实际维度。还需在唯一 allowlist 群验证 MaiBot 原生行为/表达/黑话学习与表情包收集；三类学习均 `use = true`、`learn = true`，`steal_emoji = true` 并保持 `content_filtration = true`，且 `enable_rich_reply = true` 只使用 MaiBot 既有的图片、表情包和 @ 附加能力。M1 不导入金融资料、不创建金融向量索引，也不启用群摘要或人物事实自动写回，更不新增自定义媒体存储、清理、限额或回复逻辑。
+M1 的剩余验收需要一张预先约定、无敏感信息且允许发送给模型的测试图片。将图片与问题附在同一条群消息中，验证 Qwen-VL 解析，并记录 Qwen embedding 的模型 ID 与实际响应维度；引用旧消息中的图片不是可靠的视觉输入验证。还需在唯一 allowlist 群验证 MaiBot 原生行为/表达/黑话学习与表情包收集；三类学习均 `use = true`、`learn = true`，`steal_emoji = true` 并保持 `content_filtration = true`，且 `enable_rich_reply = true` 只使用 MaiBot 既有的图片、表情包和 @ 附加能力。M1 不导入金融资料、不创建金融向量索引，也不启用群摘要或人物事实自动写回，更不新增自定义媒体存储、清理、限额或回复逻辑。
 
-**当前实现：** `scripts/start.sh m1`、`deploy/bootstrap.py --phase m1` 和 `scripts/preflight.py --phase m1` 已可用。M1 生成器加载 Qwen-VL 与 Qwen embedding，并在唯一群通过 MaiBot 原生行为/表达/黑话学习和 `steal_emoji` 启用表情包收集，同时保持 A_Memorix 插件、检索工具、人物画像注入和人物事实/群摘要写回关闭；可用 M1 进行模型、图片和表情包链路测试，不必运行 `m2`。
+**当前状态：** `scripts/start.sh m1` 已完成配置生成、预检和部署；Core 健康加载 Qwen-VL 与 Qwen embedding，并在唯一群通过 MaiBot 原生行为/表达/黑话学习和 `steal_emoji` 启用表情包收集，同时保持 A_Memorix 插件、检索工具、人物画像注入和人物事实/群摘要写回关闭。真实图片、embedding 和表情包链路测试仍待执行，不必运行 `m2`。
 
 ## M2：静态金融知识与检索所需资料
 
-M2 以已完成的 M1 为前提，复用 M1 已验证的 DashScope Qwen embedding 模型 ID 与实际维度。随后仅导入 `common` 与 `crypto` 机制科普资料；每份文件须通过 `scripts/validate_knowledge_manifest.py`，再由运营者经 SSH 隧道后的 WebUI 导入并记录来源召回验证。资料准入不要求人工审核。
+M2 以完成 M1 验收为前提，复用 M1 已验证的 DashScope Qwen embedding 模型 ID 与实际维度。随后仅导入 `common` 与 `crypto` 机制科普资料；每份文件须通过 `scripts/validate_knowledge_manifest.py`，再由运营者经 SSH 隧道后的 WebUI 导入并记录来源召回验证。资料准入不要求人工审核。
 
 M2 没有新的模型 `.env` 项：复用 M1 的 `QWEN_EMBEDDING_MODEL` 与 `QWEN_EMBEDDING_DIMENSION`；M2 的新增输入是 `knowledge/` 下的资料和 manifest。
 

@@ -4,7 +4,7 @@
 
 本仓库目前是 MaiBot 跨市场金融研究与风险教育助手的文档与部署配置仓库，不是 MaiBot 上游源码仓库。目标是在 Debian VM 上通过 Docker Compose 运行 MaiBot 1.0.12、MaiBot-Napcat-Adapter 与 NapCat，服务一个 allowlist 中的私有 QQ 群。
 
-首个可用交付按 M0 -> M1 -> M2 推进：**M0 已于 2026-07-29 完成真实验证**，即 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复的最小闭环。模型仅直连 DeepSeek（chat/推理）与 DashScope Qwen（VLM、embedding）。M1 仅通过 MaiBot 1.0.12 原生模型、行为/表达/黑话学习与表情接口验证 Qwen-VL、安全图片解析和 Qwen embedding 的模型 ID/实际维度，并在唯一 allowlist 群启用这些原生学习能力和表情包收集；不导入金融资料，也不启用 A_Memorix、检索或自动人物事实/群摘要写回。M1 不新增媒体存储、清理、限额或回复策略的自定义实现。M2 才导入元数据、许可证和 SHA-256 均通过自动校验的 `common` 与 `crypto` 机制科普资料，验证静态检索、来源追溯与金融风险教育边界；不以人工审核或主观确认作为资料准入或上线门槛。之后才扩展其余静态资料域。实时数据、交易能力、聚合模型网关、完整记忆治理和完整 Runbook 均不属于 v1。
+首个可用交付按 M0 -> M1 -> M2 推进：**M0 已于 2026-07-29 完成真实验证**，即 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复的最小闭环。模型仅直连 DeepSeek（chat/推理）与 DashScope Qwen（VLM、embedding）。M1 已于 2026-07-29 部署并健康加载 DeepSeek、Qwen-VL 和 Qwen embedding；它仅通过 MaiBot 1.0.12 原生模型、行为/表达/黑话学习与表情接口验证安全图片解析和 embedding 的实际响应，并在唯一 allowlist 群启用这些原生学习能力和表情包收集；不导入金融资料，也不启用 A_Memorix、检索或自动人物事实/群摘要写回。真实模型调用与群内媒体行为验收尚未完成。M1 不新增媒体存储、清理、限额或回复策略的自定义实现。M2 才导入元数据、许可证和 SHA-256 均通过自动校验的 `common` 与 `crypto` 机制科普资料，验证静态检索、来源追溯与金融风险教育边界；不以人工审核或主观确认作为资料准入或上线门槛。之后才扩展其余静态资料域。实时数据、交易能力、聚合模型网关、完整记忆治理和完整 Runbook 均不属于 v1。
 
 ## 文档优先级
 

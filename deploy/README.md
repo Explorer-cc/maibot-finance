@@ -40,21 +40,21 @@ NapCat 的 WebUI 使用 `.env` 中的 `NAPCAT_WEBUI_TOKEN`。其上游会在 std
 
 ## M1：模型与多模态就绪
 
-M1 需确认 `.env` 中的 Qwen-VL 与 Qwen embedding 项，用一张预先约定的非敏感图片验证 MaiBot 原生视觉解析，并确认 embedding 的实际维度。M1 在唯一群通过原生行为/表达/黑话学习与 `steal_emoji = true` 启用表情包收集且保持内容过滤；不导入金融资料、不启用金融检索或人物事实/群摘要写回，也不增加自定义媒体功能。
+M1 已于 2026-07-29 部署：运行配置预检通过，Core 健康加载 DeepSeek、Qwen-VL（`qwen3-vl-plus`）和 Qwen embedding（`qwen3.7-text-embedding`、1024 维）。M1 在唯一群通过原生行为/表达/黑话学习与 `steal_emoji = true` 启用表情包收集且保持内容过滤；不导入金融资料、不启用金融检索或人物事实/群摘要写回，也不增加自定义媒体功能。
 
-M1 已提供独立配置、启动参数和预检，可执行：
+后续重建 M1 配置仍使用：
 
 ```bash
 ./scripts/start.sh m1
 ```
 
-它加载 Qwen-VL 与 Qwen embedding，并启用 MaiBot 原生行为/表达/黑话学习和表情包收集；保持 A_Memorix 插件、检索工具、人物画像注入和人物事实/群摘要写回关闭，不会导入金融资料、创建金融向量索引或增加自定义媒体功能。
+该命令加载 Qwen-VL 与 Qwen embedding，并启用 MaiBot 原生行为/表达/黑话学习和表情包收集；保持 A_Memorix 插件、检索工具、人物画像注入和人物事实/群摘要写回关闭，不会导入金融资料、创建金融向量索引或增加自定义媒体功能。
 
-启动脚本会在生成配置后仅使用 Docker Compose 原生命令重建 `core`，让其读取新的模型配置；不会重启保持 QQ 登录态的 `napcat`。
+启动脚本会在生成配置后仅使用 Docker Compose 原生命令重建 `core`，让其读取新的模型配置；不会重启保持 QQ 登录态的 `napcat`。部署并不等同于验收：仍须在唯一 allowlist 群发送“图片与问题在同一消息中”的非敏感测试图片，核对图片理解、Qwen embedding 实际响应与 1024 维，以及 MaiBot 原生表情包收集行为。引用旧消息中的图片不作为可靠的视觉输入验收方式。
 
 ## M2：静态金融知识与检索
 
-M2 以前需完成 M1，并为 `common` 与 `crypto` 资料完成 manifest 自动校验。资料准入不要求人工审核。M2 不会开启实时行情、交易、MCP 或普通私聊。所有变更先运行：
+M2 以前需完成 M1 验收，并为 `common` 与 `crypto` 资料完成 manifest 自动校验。资料准入不要求人工审核。M2 不会开启实时行情、交易、MCP 或普通私聊。所有变更先运行：
 
 ```bash
 .venv/bin/python scripts/preflight.py --phase m2 --compose

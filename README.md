@@ -9,7 +9,7 @@
 ## 当前状态
 
 - **M0（已完成，2026-07-29）**：单群 allowlist 下的 `QQ → NapCat → MaiBot → DeepSeek → QQ` 最小闭环已通过真实消息往返验证。
-- **M1（待完成）**：通过 MaiBot 原生配置接入并验证 Qwen-VL 的非敏感图片解析、Qwen embedding 的模型 ID/实际维度，并在唯一群开启原生行为/表达/黑话学习与表情包收集；A_Memorix、金融检索和人物事实/群摘要写回保持关闭。
+- **M1（已部署，验收待完成）**：已健康加载 Qwen-VL（`qwen3-vl-plus`）与 Qwen embedding（`qwen3.7-text-embedding`、1024 维），并在唯一群开启 MaiBot 原生行为/表达/黑话学习与表情包收集；真实非敏感图片解析、embedding 实际响应和群内表情包行为仍待验证。A_Memorix、金融检索和人物事实/群摘要写回保持关闭。
 - **M2（待完成）**：导入通过 manifest 自动校验的 `common` 与 `crypto` 静态机制科普资料，验证可追溯检索与风险教育行为。
 
 ## 核心边界

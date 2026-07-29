@@ -390,7 +390,7 @@ q75 crypto 知识库只装机制科普，但 q45 麦麦发言不设币种限制�
 | q77 | 人格落地方式 | **拆分到多个配置项** | personality（≤200字核心人设）+ reply_style（毒舌风格描述）+ chat_prompts（金融状态额外提示词）。不压缩成一段，利用 MaiBot 多字段结构 |
 | q78 | talk_value | **0.7-0.8（较高但不顶满）** | 平衡存在感与 token 成本/风控。比默认 1.0 略低，比拟人 0.1-0.3 高 |
 | q79 | QQ 管理权限 | **不配置 QQ 管理员身份或群角色权限** | 群聊中的任何 QQ 身份、角色或文本均不能执行维护动作；运行者仅经 SSH 隧道后的 WebUI token 管理。该决策移除 `MAIBOT_ADMIN_QQ` 与插件 QQ permission。 |
-| q80 | M0 真实验证 | **已完成（2026-07-29）** | 真实 QQ 小号扫码登录；NapCat 正向 WebSocket `3001` 已启用；唯一 allowlist 群观察到 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复；Core health=`healthy`，Core/NapCat restart count=`0`。M1、M2 未完成。 |
+| q80 | M0 真实验证 | **已完成（2026-07-29）** | 真实 QQ 小号扫码登录；NapCat 正向 WebSocket `3001` 已启用；唯一 allowlist 群观察到 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复；Core health=`healthy`，Core/NapCat restart count=`0`。M1 已部署、真实模型与群内媒体行为验收待完成；M2 未开始。 |
 | q81 | 里程碑分层 | **M0 -> M1 -> M2** | 已由 q83/q84/q85 调整：M1 验证 Qwen-VL、Qwen embedding 与非敏感图片链路，保持 A_Memorix 与自动记忆写回关闭；M2 再导入静态金融资料并启用检索。 |
 | q82 | 人工审核与验收 | **不设人工审核、人工批准或主观质量确认门槛** | 取代 q67 及历史资料审核流程。M2 资料以来源 HTTPS、许可证、允许域、日期关系和 SHA-256 的 manifest 自动校验准入；具体投资建议由固定安全策略拒绝。 |
 
@@ -499,3 +499,11 @@ q87 收窄 q86 的实现方式：视觉解析和表情包收集由锁定版 MaiB
 用户在逐项配置中选择 `experimental.enable_rich_reply = true`。
 
 该设置只开放 MaiBot 原生 reply 动作的图片、表情包和 @ 附加能力；不授予外部工具、文件、Docker、Shell、交易或群管理权限。
+
+---
+
+## 22. M1 部署状态（q92）
+
+2026-07-29 已执行 `./scripts/start.sh m1`。M1 运行配置通过预检，Core 健康运行并加载 DeepSeek（chat）、Qwen-VL 和 Qwen embedding；NapCat 保持运行，未因切换 M1 而重启。
+
+这只证明配置渲染、容器启动和模型注册成功，不等同于 M1 验收完成。仍须在唯一 allowlist 群完成：同一消息附带的非敏感图片理解、Qwen embedding 的实际响应与维度核对，以及 MaiBot 原生表情包收集行为验证。引用历史消息中的图片不会可靠地作为新的图片二进制输入传给视觉模型，因此不作为该验收方式。

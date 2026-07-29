@@ -6,7 +6,7 @@
 
 2026-07-29 已完成真实 QQ 小号扫码登录，确认 NapCat 正向 WebSocket `3001` 启用，并在唯一 allowlist 群观察到 `QQ -> NapCat -> MaiBot -> DeepSeek -> QQ` 回复。运行态检查显示 Core health 为 `healthy`、Core/NapCat 重启次数均为 `0`，Core WebUI health 与 NapCat 本机管理面均可达。
 
-它还不是已完成的 M1 或 M2：M1 的 Qwen-VL/Qwen embedding 凭据确认、实际维度记录和安全图片验证尚未执行，但独立阶段配置、启动参数和预检已实现。M2 的知识资料、知识导入、硬限流和告警也尚未执行。M2 不设置人工审核或一周主观观察门槛。
+M1 已部署但尚未验收完成：真实凭据的运行配置已通过预检，Core 健康加载 DeepSeek、Qwen-VL 和 Qwen embedding；尚未记录非敏感图片理解、embedding 实际响应/维度及群内表情包收集行为的真实验证证据。M2 的知识资料、知识导入、硬限流和告警也尚未执行。M2 不设置人工审核或一周主观观察门槛。
 
 ## 已核验
 
@@ -17,11 +17,11 @@
 | 配置渲染 | 可用 | `deploy/bootstrap.py` 生成 `runtime/`，权限为私有；适配器 checkout 固定 commit `e34e286fa9c6f70e5c6aa3dc828451ab52c26773`。 |
 | 渠道隔离 | 可用 | Adapter 为群 `whitelist`、仅一个群 ID、私聊白名单为空且 `ignore_self_message=true`。 |
 | 网络暴露 | 合理 | WebUI、NapCat 和可选 sqlite-web 都只绑定 `127.0.0.1`；sqlite-web 为只读的 `admin` profile。 |
-| 配置兼容性 | M0 已通过源码模型验证；当前 M1/M2 范围已静态校验 | M0 已通过 MaiBot 1.0.12 的 Pydantic 配置模型与本地预检。q84 后的 M1/M2 改为 DeepSeek + DashScope Qwen，已以虚构值完成配置渲染断言；仍待分别以真实凭据运行完整预检、Compose 渲染与模型调用。 |
+| 配置兼容性 | M0 已通过源码模型验证；M1 已通过真实运行配置预检与 Compose 部署 | M0 已通过 MaiBot 1.0.12 的 Pydantic 配置模型与本地预检。M1 使用真实凭据渲染 DeepSeek + DashScope Qwen 配置，`./scripts/start.sh m1` 已通过预检并完成 Compose 重建；实际模型请求仍待验证。M2 尚未开始。 |
 | Python 工具环境 | 已建立 | 仓库 `.venv` 使用 Python 3.12.13，供 bootstrap、预检与上游模型校验使用。容器内 core 使用上游镜像自身的 Python 运行时。 |
-| 容器启动 | 已通过 core smoke test | 使用假凭据、回环端口启动锁定镜像，`/api/webui/health` 返回 `healthy`；插件运行时加载，A_Memorix 在 M0 正确保持关闭。 |
+| 容器启动 | M0 smoke test 与 M1 实际部署均已通过 | 假凭据 smoke test 中，锁定镜像的 `/api/webui/health` 返回 `healthy`，插件运行时加载且 A_Memorix 在 M0 保持关闭。2026-07-29 的 M1 部署后，Core 同样处于 `healthy`，NapCat 保持运行。 |
 | 主机前置 | 已通过 | `scripts/host-check.sh` 已验证 Docker daemon、`docker-compose` 与 AppArmor parser；启动脚本会先执行该检查。 |
-| 模型配置加载 | M0 已通过容器实际模型校验；当前 M1/M2 待验证 | M0 加载结果：A_Memorix `false`、遥测 `false`、日志 `WARNING`、1 个模型。q85 后的 M1 静态渲染为 DeepSeek + Qwen-VL + Qwen embedding（A_Memorix 关闭）；M2 复用该模型栈并启用 A_Memorix。两者均尚未做容器加载验证。 |
+| 模型配置加载 | M0 与 M1 均已通过容器加载；M1 调用结果待验证 | M0 加载结果：A_Memorix `false`、遥测 `false`、日志 `WARNING`、1 个模型。M1 运行态加载 DeepSeek、Qwen-VL 和 Qwen embedding，A_Memorix 保持关闭；尚未做 Qwen-VL 图片调用、embedding 端点响应或群内表情包行为验证。M2 将复用该模型栈并启用 A_Memorix。 |
 | NapCat 容器 | 已通过启动验证 | 固定 `4.18.13` 镜像在回环管理端口返回 HTTP `301`；预置 `webui.json` 保持 `0600`，Docker logging driver 为 `none`。 |
 | Core -> NapCat 网络 | 已通过真实验证 | 2026-07-29 完成 NapCat QQ 登录后，正向 WebSocket `3001` 启用，唯一 allowlist 群的真实消息成功经 Core 调用 DeepSeek 后回复。 |
 | 原始 Compose M0 | 已通过端到端启动检查 | 使用假凭据运行未改写的 `compose.yaml`，core 进入 `healthy`、NapCat 启动、管理端口仅绑定回环，NapCat logging driver 为 `none`，core 日志未出现 WebUI token；测试服务随后已停止。 |
@@ -37,11 +37,11 @@
 6. M2 的资料目录现在提供受控 manifest 与 SHA-256 校验器，但不包含任何金融资料，也不会自动导入。这样可以在运营者提供经许可文件后先校验元数据和文件完整性，再通过 WebUI 逐批导入。
 7. NapCat 上游会把 WebUI token 与二维码写入 stdout。部署现在在首次启动前写入私有 `webui.json` 和正向 OneBot WebSocket `onebot11.json`（内部 `3001`、与适配器相同的 token），并禁用 NapCat 的 Docker 日志持久化；运营者只能经回环 WebUI 和 SSH 隧道完成登录，不能将容器日志作为登录通道。运行配置不再授予任何 QQ 身份插件权限。
 
-## M1 前仍未完成
+## M1 验收仍未完成
 
-- 确认 Qwen-VL 与 Qwen embedding 凭据、模型 ID 和 embedding 实际维度；以一张预先约定的非敏感图片验证视觉解析与失败降级。
-- 验证 Qwen-VL 图片理解与唯一 allowlist 群的 MaiBot 原生表情包收集，且 `steal_emoji = true` 保持内容过滤；不增加自定义媒体控制或回复逻辑。
-- 确保 M1 不导入金融资料、不启用金融检索或自动记忆写回。
+- 在唯一 allowlist 群发送图片与问题在同一消息中的预先约定非敏感测试图片，记录 Qwen-VL 解析结果；引用旧消息中的图片不作为可靠的视觉输入验证。
+- 记录 Qwen embedding 的实际端点响应和维度，核对其与已配置的 `qwen3.7-text-embedding`、`1024` 一致。
+- 验证 MaiBot 原生表情包收集行为，确认 `steal_emoji = true` 与 `content_filtration = true` 生效；不增加自定义媒体控制或回复逻辑。
 
 ## M2 前仍未完成
 

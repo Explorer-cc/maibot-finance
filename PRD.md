@@ -6,7 +6,7 @@
 - 产品形态：基于 MaiBot 的 QQ 群聊拟人化智能体
 - 部署环境：Debian Linux，Docker Compose
 - QQ 接入：MaiBot NapCat Adapter；该接入属于社区 NTQQ 协议方案，需单独评估账号风险
-- 文档状态：需求基线；M0 已于 2026-07-29 通过真实 QQ 消息往返验证，M1 与 M2 尚未完成
+- 文档状态：需求基线；M0 已于 2026-07-29 通过真实 QQ 消息往返验证；M1 已部署并健康加载配置，真实模型调用验收待完成；M2 尚未开始
 - 目标版本：MaiBot 1.0.12 兼容（grilling q76 修正：原 v1.1.x 不存在）
 
 ## Problem Statement
@@ -56,7 +56,7 @@
 ### M0、M1 与 M2 分期
 
 - **M0（已完成）**：单群 allowlist 下的 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 最小闭环。
-- **M1（待完成）**：仅通过 MaiBot 原生配置加载 Qwen-VL 与 Qwen embedding，验证非敏感图片解析和 embedding 的模型 ID/实际维度，并在唯一群开启原生行为/表达/黑话学习与表情包收集；A_Memorix、金融检索和人物事实/群摘要写回保持关闭。
+- **M1（已部署，验收待完成）**：仅通过 MaiBot 原生配置加载 Qwen-VL（`qwen3-vl-plus`）与 Qwen embedding（`qwen3.7-text-embedding`、1024 维），并在唯一群开启原生行为/表达/黑话学习与表情包收集；待验证非敏感图片解析与 embedding 实际响应。A_Memorix、金融检索和人物事实/群摘要写回保持关闭。
 - **M2（待完成）**：导入 manifest 自动校验通过的 `common` 与 `crypto` 静态机制资料，验证可追溯检索和风险教育行为。M2 不以人工审核、人工批准或主观质量确认作为门槛；所有具体投资建议均由固定安全策略拒绝。
 
 ## Background Research and Product Choice
