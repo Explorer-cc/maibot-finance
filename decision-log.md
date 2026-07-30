@@ -404,6 +404,7 @@ q75 crypto 知识库只装机制科普，但 q45 麦麦发言不设币种限制�
 | q80 | M0 真实验证 | **已完成（2026-07-29）** | 真实 QQ 小号扫码登录；NapCat 正向 WebSocket `3001` 已启用；唯一 allowlist 群观察到 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复；Core health=`healthy`，Core/NapCat restart count=`0`。M1 已部署、真实模型与群内媒体行为验收待完成；M2 配置基线已完成，M3 规划金融知识库与财经新闻 MCP。 |
 | q81 | 里程碑分层 | **M0 -> M1 -> M2 -> M3** | 当前后端已提前启用 A_Memorix 查询和自动写回；M2 固化当前配置且 MCP 关闭，M3 再导入静态金融资料、接入受限财经新闻 MCP 并验证检索。 |
 | q82 | 人工审核与验收 | **不设人工审核、人工批准或主观质量确认门槛** | 取代 q67 及历史资料审核流程。M3 静态资料以来源 HTTPS、许可证、允许域、日期关系和 SHA-256 的 manifest 自动校验准入。 |
+| q93 | 公网管理入口 | **仅 Core 使用独立 Caddy 反向代理 + 公网 IP 的 HTTP `8080` + Basic Auth** | 运营者明确要求取消域名与 HTTPS，并接受 MaiBot 密码和应用 token 在公网明文传输、被拦截或复用的风险。`public-maibot-admin` 的 `8080` 仅代理 Core；NapCat 不提供公网代理，管理面只经 SSH 隧道访问。Core/NapCat 继续回环绑定，保留 WebUI token，绝不公开 NapCat、sqlite-web、OneBot `3001` 或 Docker API。 |
 
 ### compose 架构确认（读文档）
 
@@ -412,6 +413,7 @@ q75 crypto 知识库只装机制科普，但 q45 麦麦发言不设币种限制�
 | core | MaiBot 核心（人格/记忆/推理） | WebUI 18001→8001 |
 | napcat | QQ 连接器（NTQQ 协议） | 管理面板 6099，WebSocket 3001 |
 | sqlite-web | 数据库查看工具 | 8120 |
+| public-maibot-admin（可选） | Caddy Core 管理代理（明文例外） | 8080 → Core |
 
 **关键**：不需要 MongoDB、不需要独立向量数据库、不需要模型网关。A_Memorix 全内嵌。两个 API provider（DeepSeek/DashScope）通过 core 容器出站调用。
 

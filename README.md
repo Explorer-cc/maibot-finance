@@ -24,15 +24,18 @@
 
 ## 技术架构
 
-通过 Docker Compose 运行三个服务（见 [`compose.yaml`](compose.yaml)）：
+通过 Docker Compose 运行 core、NapCat 与可选管理服务（见 [`compose.yaml`](compose.yaml)）：
 
 | 服务 | 作用 |
 | --- | --- |
 | `core` | MaiBot 核心：人格表达、群聊观察、回复时机、关系记忆、插件与 WebUI |
 | `napcat` | NapCat Adapter + NapCat：QQ 消息接入（社区 NTQQ 协议，需单独评估账号风险） |
 | `sqlite-web` | 可选只读管理工具（`admin` profile），按需经 SSH 隧道启动 |
+| `public-maibot-admin` | 可选独立 Caddy 代理（`public-admin` profile）；仅代理 MaiBot 公网入口（运营者接受明文传输风险） |
 
 模型后端仅涉及 DeepSeek（chat）与 DashScope Qwen（VLM、embedding）。当前 A_Memorix 查询已启用；M3 再导入静态金融资料并验证其召回。
+
+`core`、`napcat` 与 `sqlite-web` 仍仅绑定服务器 `127.0.0.1`。如启用公网管理入口，只有 `public-maibot-admin` 公开 `8080`（MaiBot）；这是明确记录的明文 HTTP 例外。NapCat 管理面仅经 SSH 隧道访问，配置与验收步骤见 [`deploy/README.md`](deploy/README.md)。
 
 ## 目录结构
 

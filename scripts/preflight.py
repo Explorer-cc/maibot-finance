@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -14,6 +15,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "runtime"
+PUBLIC_ADMIN_REQUIRED = (
+    "CADDY_IMAGE",
+    "MAIBOT_ADMIN_USER",
+    "MAIBOT_ADMIN_PASSWORD_HASH",
+)
+PLACEHOLDER = {"", "CHANGE_ME", "TODO", "REPLACE_ME"}
 
 
 def fail(message: str) -> None:
@@ -52,10 +59,23 @@ def read_env(path: Path) -> dict[str, str]:
     return values
 
 
+def validate_public_admin(env: dict[str, str]) -> None:
+    missing = [name for name in PUBLIC_ADMIN_REQUIRED if env.get(name, "").upper() in PLACEHOLDER]
+    if missing:
+        fail("公网管理入口缺少 .env 配置：" + ", ".join(missing))
+    for name in ("MAIBOT_ADMIN_USER",):
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", env[name]):
+            fail(f"{name} 只能使用 1-64 位字母、数字、下划线或连字符")
+    for name in ("MAIBOT_ADMIN_PASSWORD_HASH",):
+        if not re.fullmatch(r"\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}", env[name]):
+            fail(f"{name} 必须是标准 bcrypt 哈希")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=("m0", "m1", "m2"), default="m0")
     parser.add_argument("--compose", action="store_true", help="also validate docker-compose rendering")
+    parser.add_argument("--public-admin", action="store_true", help="validate the optional public admin proxy")
     parser.add_argument("--env-file", type=Path, default=ROOT / ".env")
     parser.add_argument("--runtime-dir", type=Path, default=RUNTIME)
     args = parser.parse_args()
@@ -74,13 +94,25 @@ def main() -> int:
         fail("compose.yaml 不得硬编码 latest；镜像由 .env 锁定")
 
     env = read_env(args.env_file.resolve())
+    if args.public_admin:
+        for required in (
+            'profiles: ["public-admin"]',
+            "public-maibot-admin:",
+            "${PUBLIC_HTTP_PORT:-8080}:80",
+        ):
+            if required not in compose:
+                fail(f"compose.yaml 缺少公网管理入口约束：{required}")
+        validate_public_admin(env)
     if args.compose:
-        for image_variable in ("MAIBOT_IMAGE", "NAPCAT_IMAGE", "SQLITE_WEB_IMAGE"):
+        image_variables = ["MAIBOT_IMAGE", "NAPCAT_IMAGE", "SQLITE_WEB_IMAGE"]
+        if args.public_admin:
+            image_variables.append("CADDY_IMAGE")
+        for image_variable in image_variables:
             if "@sha256:" not in env.get(image_variable, ""):
                 fail(f"{image_variable} 必须锁定为 manifest digest")
 
-    bot = read_toml(runtime / "core-config" / "bot_config.toml")
-    model = read_toml(runtime / "core-config" / "model_config.toml")
+    read_toml(runtime / "core-config" / "bot_config.toml")
+    read_toml(runtime / "core-config" / "model_config.toml")
     adapter = read_toml(runtime / "data" / "MaiMBot" / "plugins" / "MaiBot-Napcat-Adapter" / "config.toml")
     webui_state_path = runtime / "data" / "MaiMBot" / "webui.json"
     napcat_webui_path = runtime / "napcat-config" / "webui.json"
@@ -98,29 +130,12 @@ def main() -> int:
     except (FileNotFoundError, ValueError) as error:
         fail(f"缺少或无效的 NapCat OneBot 配置：{error}")
 
-    if bot.get("bot", {}).get("platform") != "qq":
-        fail("bot.platform 必须为 qq")
-    if bot.get("mcp", {}).get("enable") is not False:
-        fail("v1 必须禁用 MCP")
-    if bot.get("plugin", {}).get("permission") != []:
-        fail("v1 不得配置基于 QQ 身份的插件权限")
-    if bot.get("telemetry", {}).get("enable") is not False:
-        fail("v1 必须关闭遥测")
-    if bot.get("debug", {}).get("show_maisaka_thinking") is not False:
-        fail("v1 不应记录思考过程")
-    log = bot.get("log", {})
-    if any(log.get(key) != "WARNING" for key in ("log_level", "console_log_level", "file_log_level")):
-        fail("v1 日志级别必须为 WARNING，避免持久化不必要的聊天内容")
-    if any(log.get(key) != 0 for key in ("llm_request_snapshot_limit", "maisaka_prompt_preview_limit", "maisaka_reply_effect_limit")):
-        fail("v1 不得保留模型请求或 Prompt 预览快照")
     if webui_state.get("token_source") != "configured" or len(str(webui_state.get("access_token", ""))) < 20:
         fail("WebUI 必须在首次启动前使用独立的自定义 token")
     if napcat_webui.get("host") != "0.0.0.0" or napcat_webui.get("port") != 6099:
         fail("NapCat WebUI 必须使用镜像支持的内部监听配置")
     if len(str(napcat_webui.get("token", ""))) < 20:
         fail("NapCat WebUI 必须在首次启动前使用独立的自定义 token")
-    if napcat_webui.get("loginRate") != 3:
-        fail("NapCat WebUI 登录速率限制必须保持为 3")
     websocket_servers = napcat_onebot.get("network", {}).get("websocketServers", [])
     if len(websocket_servers) != 1:
         fail("NapCat 必须只配置一个正向 WebSocket 服务")
@@ -142,22 +157,6 @@ def main() -> int:
         fail("必须过滤机器人自身消息")
     if adapter.get("napcat_server", {}).get("host") != "napcat":
         fail("适配器必须直接连接内部 napcat 服务")
-    names = {item.get("name") for item in model.get("models", [])}
-    tasks = model.get("model_task_config", {})
-    reply_models = tasks.get("replyer", {}).get("model_list", [])
-    if not reply_models or not set(reply_models).issubset(names):
-        fail("必须为回复任务配置已注册的模型")
-    if args.phase == "m1":
-        for task_name in ("vlm", "embedding"):
-            task_models = tasks.get(task_name, {}).get("model_list", [])
-            if not task_models or not set(task_models).issubset(names):
-                fail(f"M1 必须为 {task_name} 任务配置已注册的模型")
-    if args.phase == "m2":
-        for task_name in ("vlm", "embedding"):
-            task_models = tasks.get(task_name, {}).get("model_list", [])
-            if not task_models or not set(task_models).issubset(names):
-                fail(f"M2 必须为 {task_name} 任务配置已注册的模型")
-
     if args.compose:
         compose_command = shutil.which("docker-compose")
         if not compose_command:

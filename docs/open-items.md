@@ -6,7 +6,7 @@
 
 `.env.example` 中的镜像 digest、适配器仓库/commit、默认 API base URL 与端口均已按 2026-07-28 的锁定实现核验。首次接入不应修改它们。
 
-- 仅在本机端口冲突时修改 `WEBUI_PORT`、`NAPCAT_WEBUI_PORT` 或 `SQLITE_WEB_PORT`；保持 Compose 的 `127.0.0.1` 绑定，并同步调整 SSH 隧道命令。
+- 仅在本机端口冲突时修改 `WEBUI_PORT`、`NAPCAT_WEBUI_PORT` 或 `SQLITE_WEB_PORT`；保持 Compose 的 `127.0.0.1` 绑定。SSH 隧道始终可用；仅 MaiBot 管理入口可通过可选 `public-admin` profile 的 `8080` 公开，NapCat 管理面只经 SSH 隧道访问。
 - 不将镜像改为 tag、`latest` 或未经审计的 digest；升级须重新核验 MaiBot 版本、镜像 digest、配置迁移与 Adapter 兼容性。
 - 不在 M2 的 `.env` 中加入实时数据、交易、MCP、普通私聊或第二个群的配置；当前生成器会固定关闭/拒绝这些能力。M3 的财经新闻 MCP 另行设计，不提前写入模板。
 
@@ -22,6 +22,22 @@
 | Core 管理面 | `WEBUI_ACCESS_TOKEN` | 独立随机值，至少 20 个字符；不得复用模型 key、QQ 密码或任何 NapCat token。 |
 | NapCat 内部链路 | `NAPCAT_WS_TOKEN` | 独立随机值；建议至少 20 个字符。它同时写入 NapCat 正向 WebSocket `3001` 与 Adapter，不得与 WebUI token、模型 key 或 QQ 密码复用。 |
 | NapCat 管理面 | `NAPCAT_WEBUI_TOKEN` | 独立随机值，至少 20 个字符；不得复用 core WebUI token、WS token、模型 key 或 QQ 密码。 |
+| MaiBot 公网代理 | `CADDY_IMAGE`、`PUBLIC_HTTP_PORT`、`MAIBOT_ADMIN_USER`、`MAIBOT_ADMIN_PASSWORD_HASH` | 仅在启用 `public-admin` 时填写。密码项是 bcrypt 哈希，不是明文密码；此配置仅适用于已接受 HTTP 明文传输风险的运营者。NapCat 没有公网代理配置。 |
+
+## 可选公网 IP HTTP 管理入口：上线前置条件与验收
+
+此入口已获运营者授权，但默认不会随 `./scripts/start.sh` 启动。`public-maibot-admin` 仅公开 Caddy 的 `8080`（MaiBot），不改动 `core`、`napcat` 与 `sqlite-web` 的回环绑定，也不重启 QQ 链路。NapCat 管理面没有公网入口，必须使用 SSH 隧道。**MaiBot 公网入口不使用 HTTPS：Basic Auth 密码和 MaiBot token 将以明文经过公网；任意网络路径上的拦截者可接管 MaiBot 后台。**
+
+1. 不需要域名或 DNS。确认服务器具有稳定公网 IPv4 地址。
+2. 在服务器防火墙/云安全组开放 TCP `8080` 与既有 SSH 端口；不要开放 `18001`、`6099`、`8120` 或 `3001`。
+3. 使用下列命令在可信终端生成两条**不同**的 bcrypt 哈希，并将原样输出填入 `.env` 的两个 `*_PASSWORD_HASH` 项。不要把明文密码、哈希或 `.env` 提交或发到聊天记录：
+
+   ```bash
+   docker run --rm caddy@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d caddy hash-password --algorithm bcrypt --plaintext '<独立强密码>'
+   ```
+
+4. 填完 `.env` 后运行 `./scripts/start-public-admin.sh`。该脚本只拉取并启动/更新 `public-admin`，不会重启 Core 或 NapCat。
+5. 验收 `http://<公网 IP>:8080`（MaiBot）：无 Basic Auth 返回 `401`；Basic Auth 通过后仍必须输入 MaiBot token。确认公网 IP 的 `18001`、`6099`、`8120`、`3001` 均不可达；NapCat 仅通过 SSH 隧道访问，并保留该隧道作为紧急管理入口。
 
 ## M0：必须完成的外部操作与验证
 

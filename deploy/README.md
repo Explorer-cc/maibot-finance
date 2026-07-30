@@ -16,7 +16,7 @@ cp .env.example .env
 ./scripts/start.sh m0
 ```
 
-逐项配置要求与外部控制台操作见 [`docs/open-items.md`](../docs/open-items.md)。除填写 M0 的 `.env` 项外，还必须生成三个彼此不同的 token：Core WebUI、NapCat WebUI 和 NapCat 正向 WebSocket。不配置 QQ 管理员身份或 QQ 维护命令；管理只经 SSH 隧道后的 WebUI token 进行。M2 不额外开启第二个群、普通私聊、MCP、实时数据或交易能力；M3 的财经新闻 MCP 另行设计与验收。
+逐项配置要求与外部控制台操作见 [`docs/open-items.md`](../docs/open-items.md)。除填写 M0 的 `.env` 项外，还必须生成三个彼此不同的 token：Core WebUI、NapCat WebUI 和 NapCat 正向 WebSocket。不配置 QQ 管理员身份或 QQ 维护命令；管理默认经 SSH 隧道，也可在运营者明确接受明文传输风险后使用可选公网 IP HTTP 代理。M2 不额外开启第二个群、普通私聊、MCP、实时数据或交易能力；M3 的财经新闻 MCP 另行设计与验收。
 
 `bootstrap.py` 会将实际 `.env` 权限收紧为 `0600`；不要把它复制到 Git、工单、聊天记录或 WebUI 配置导出中。
 
@@ -37,6 +37,18 @@ ssh -L 18001:127.0.0.1:18001 -L 6099:127.0.0.1:6099 <user>@<server>
 然后访问本机 `http://127.0.0.1:6099` 完成扫码登录。bootstrap 已预置唯一的正向 WebSocket `3001` 和 `.env` 中的 `NAPCAT_WS_TOKEN`；登录后在 NapCat WebUI 中核对它仍启用、token 未被改写且不回传自身消息。完成后只在生产群发送预先约定的无敏感 `@麦麦` 测试消息，记录 QQ 往返和 WebUI health 结果。
 
 NapCat 的 WebUI 使用 `.env` 中的 `NAPCAT_WEBUI_TOKEN`。其上游会在 stdout 输出 token 和登录二维码，因此 Compose 默认禁用 NapCat 的 Docker 日志持久化；通过 WebUI 完成登录，不要依赖 `docker-compose logs napcat` 获取二维码。
+
+## 可选：公网 IP 的两个 HTTP 管理入口（不安全例外）
+
+在 `docs/open-items.md` 的“可选公网 IP HTTP 管理入口”全部前置条件完成后，填写 `.env` 中 `CADDY_IMAGE`、端口和 `*_ADMIN_*` 项，并执行：
+
+```bash
+./scripts/start-public-admin.sh
+```
+
+该命令仅启动 `public-maibot-admin` Caddy 容器，将 `http://<公网 IP>:8080` 代理至 Core。Basic Auth 通过后仍要输入 MaiBot 原有 token。NapCat 没有公网代理，必须经 SSH 隧道访问。此方案刻意禁用 HTTPS、不会申请证书；MaiBot 的公网链路会明文暴露用户名、密码和应用 token，运营者已明确接受该风险。
+
+不要将 `18001`、`6099`、`8120` 或 `3001` 暴露到公网；Core、NapCat 和 sqlite-web 的 Compose 端口绑定必须保持 `127.0.0.1`。公网代理不会替代 SSH 隧道，SSH 仍作为代理或 DNS 故障时的受控应急入口。
 
 ## M1：模型与多模态就绪
 
