@@ -1,0 +1,4 @@
+services:
+  snowluma:
+    ports:
+      - "127.0.0.1:${SNOWLUMA_NOVNC_PORT}:6081"

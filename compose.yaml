@@ -51,6 +51,38 @@ services:
     logging:
       driver: "none"
 
+  snowluma:
+    image: ${SNOWLUMA_IMAGE}
+    container_name: maibot-snowluma
+    profiles: ["snowluma"]
+    restart: unless-stopped
+    shm_size: 1g
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp=unconfined
+    environment:
+      TZ: Asia/Shanghai
+      VNC_PASSWD: ${SNOWLUMA_VNC_PASSWORD}
+      SNOWLUMA_UID: "1000"
+      SNOWLUMA_GID: "1000"
+      SNOWLUMA_WEBUI_HOST: 0.0.0.0
+      SNOWLUMA_WEBUI_PORT: 5099
+      SNOWLUMA_HOOK_AUTOLOAD: "1"
+      SNOWLUMA_QQ_FLAGS: --disable-gpu --disable-software-rasterizer --disable-gpu-compositing
+      SNOWLUMA_ACCEPT_EULA: ${SNOWLUMA_ACCEPT_EULA}
+      SNOWLUMA_ACCEPT_PRIVACY: ${SNOWLUMA_ACCEPT_PRIVACY}
+    ports:
+      - "127.0.0.1:${SNOWLUMA_WEBUI_PORT}:5099"
+    volumes:
+      - ./runtime/snowluma/data:/app/data
+      - ./runtime/snowluma/qq-config:/app/.config
+      - ./runtime/snowluma/qq-local-share:/app/.local/share
+    networks:
+      - maibot
+    mem_limit: 1536m
+    pids_limit: 512
+
   sqlite-web:
     image: ${SQLITE_WEB_IMAGE}
     container_name: maibot-sqlite-web

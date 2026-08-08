@@ -5,10 +5,13 @@
 本仓库是 MaiBot 私有 QQ 群聊人格助手的部署配置与文档仓库，不是 MaiBot 上游源码。当前运行实例位于 Debian VM，由 Docker Compose 管理。
 
 - `maibot-core`：MaiBot `1.1.4`，当前为 `healthy`。
-- `maibot-napcat`：NapCat `v4.18.18`，当前运行中。
-- Adapter：`85bec0059afed0a7fd83b35ff06d393114562f42`。
-- `public-maibot-admin`：当前运行中，并将公网 `8080` 以明文 HTTP 反向代理至 Core WebUI。
-- Core WebUI 仍仅绑定服务器 `127.0.0.1:18001`，NapCat WebUI 仅绑定 `127.0.0.1:6099`；本机 SSH 转发为 `20003 → 18001` 和 `20002 → 6099`。
+- `maibot-snowluma`：SnowLuma `v1.14.3`，当前运行中；其容器具备 `SYS_PTRACE` 与 `seccomp=unconfined`。
+- Adapter：MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 当前启用。NapCat Adapter 已禁用。
+- `maibot-napcat`：NapCat `v4.18.18`，当前停止并保留回滚资料；不得与 SnowLuma 同时登录生产 QQ。
+- `public-maibot-admin`：当前运行，并将公网 `8080` 以明文 HTTP 反向代理至 Core WebUI。
+- Core WebUI 仅绑定服务器 `127.0.0.1:18001`，SnowLuma WebUI 仅绑定 `127.0.0.1:5099`；本机 SSH 转发为 `20003 → 18001` 和 `20004 → 5099`。SnowLuma noVNC 与 OneBot `3001` 不映射到宿主机。
+- 已实际验证唯一白名单群的 SnowLuma 入站文本与 MaiBot 出站回复。旧表情/GIF、语音、文件及其他特殊消息段尚未完成迁移后 QQ 验证，不得表述为已兼容。
+- 迁移前完整私有回滚备份仍在 `runtime/backups/`；稳定观察通过并由运营者确认精确目标前不得删除。NapCat 容器、配置与私有登录态按运营者决定保留，不得自行删除。
 
 运行配置的唯一事实源是私有 `.env`、`runtime/` 和实际容器。尤其是 `runtime/core-config/bot_config.toml` 与 `runtime/core-config/model_config.toml`；仓库文档、模板和生成器均不能覆盖它们。
 
@@ -33,8 +36,9 @@
 
 ## 配置与版本规则
 
-- 镜像、适配器、NapCat、模型标识、端口和配置键必须以当前锁定版本的官方资料和运行配置为准；镜像使用 digest，不使用 `latest`。
+- 镜像、适配器、SnowLuma、NapCat、模型标识、端口和配置键必须以当前锁定版本的官方资料和运行配置为准；镜像使用 digest，不使用 `latest`。
 - `runtime/` 是 Git 忽略的私有运行事实源。Core WebUI 的修改通过 bind mount 写入该目录；不得提交、导出或维护其 Git 基线副本。
+- SnowLuma WebUI 修改会写入 `runtime/snowluma/`；MaiBot/插件后台修改会写入 `runtime/core-config/`、`runtime/data/MaiMBot/` 或数据库。它们不会自动同步回 Compose、模板、文档或 Git；是否即时生效取决于具体配置，必要时重启对应服务。
 - `deploy/bootstrap.py --initialize` 只能创建缺失私有文件；`--reset-config --yes-reset-config` 会覆盖现有配置，只能在运营者明确要求恢复时使用。
 - 当前 `scripts/start.sh` 与 `scripts/preflight.py` 仍保留旧阶段参数接口；它们不应被当作当前配置能力的证明，也不得用于重写现有 `runtime/`。
 - `scripts/preflight.py` 只验证配置结构、端口约束、Token 和 Compose 渲染；它不验证模型实际调用、图片处理、聊天行为或 QQ 收发。
@@ -48,9 +52,10 @@
 - 照片定位插件会对群内图片和文件读取 GPS EXIF，在命中后向外部地理编码服务发送坐标并 @ 发图人回复地址；它还会将坐标与地址写入 Core 日志。该行为与最小化处理和日志脱敏要求冲突，必须在任何文档、排障或扩展决策中如实说明。
 - 不得把模型回答、聊天记录或未导入资料表述为当前价格、公告或市场事实。
 - Core 配置中存在非空 `plugin.permission` QQ 标识。其能够授予的实际插件动作尚未按上游文档核验，因此不得宣称“QQ 不能触发任何管理动作”。
-- `public-maibot-admin` 当前公开 HTTP `8080`，有 Caddy Basic Auth，但用户名、密码和 WebUI Token 在公网链路中不具备 HTTPS 保护。NapCat 没有公网代理。
+- `public-maibot-admin` 当前公开 HTTP `8080`，有 Caddy Basic Auth，但用户名、密码和 WebUI Token 在公网链路中不具备 HTTPS 保护。SnowLuma 与 NapCat 均没有公网代理。
+- SnowLuma noVNC `6081` 仅在容器内暴露，不映射宿主机；`compose.snowluma-login.yaml` 仅可在未来受控登录维护窗口临时使用，使用后必须以基础 Compose 强制重建 SnowLuma 以撤销映射。
 - 第三方插件与插件代码目录以读写方式挂载到 Core；启用插件可在 Core 容器内执行任意插件 Python 代码，且容器能读取运行配置和访问网络。插件安装、升级和启用必须单独审查来源、权限与数据流向。
-- 运行期密钥、QQ 登录态、聊天记录、记忆、数据库、媒体和日志不得提交或外发。运营者未保留本地升级备份，不得承诺恢复这些数据。
+- 运行期密钥、QQ 登录态、聊天记录、记忆、数据库、媒体和日志不得提交或外发。当前仅保留本次迁移前的私有回滚备份；不得将其表述为已验证的数据恢复保证。
 
 ## 文档要求
 

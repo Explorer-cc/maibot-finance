@@ -11,13 +11,14 @@
 | 组件 | 当前状态 |
 | --- | --- |
 | MaiBot Core | `1.1.4`，`maibot-core` 为 `healthy` |
-| NapCat | `v4.18.18`，`maibot-napcat` 正在运行 |
-| Adapter | `85bec0059afed0a7fd83b35ff06d393114562f42` |
+| SnowLuma | `v1.14.3`，`maibot-snowluma` 正在运行；WebUI 仅绑定 `127.0.0.1:5099` |
+| Adapter | MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 已启用；NapCat Adapter 已禁用 |
+| NapCat | `v4.18.18`，`maibot-napcat` 已停止并保留回滚资料 |
 | 管理代理 | `public-maibot-admin` 正在运行，公网监听 HTTP `8080` |
 | Core WebUI | 服务器 `127.0.0.1:18001`；SSH 本机转发 `20003` |
-| NapCat WebUI | 服务器 `127.0.0.1:6099`；SSH 本机转发 `20002` |
+| SnowLuma WebUI | 服务器 `127.0.0.1:5099`；SSH 本机转发 `20004` |
 
-QQ 消息收发已经验证。当前升级没有改动端口、Token、QQ 登录态、聊天记录或既有 SSH 转发。
+唯一白名单群的 SnowLuma 入站文本与 MaiBot 出站回复已经验证。Core 继续使用原数据库、记忆、聊天记录和表情目录；旧表情/GIF、语音、文件与特殊消息段尚未核验。
 
 ## 当前功能边界
 
@@ -38,7 +39,7 @@ QQ 消息收发已经验证。当前升级没有改动端口、Token、QQ 登录
 
 ### 插件与外部数据处理
 
-- NapCat Adapter 是 QQ 渠道所必需的已启用适配器。
+- SnowLuma Adapter 是当前 QQ 渠道所必需的已启用适配器；NapCat Adapter 保留但禁用。
 - 智能戳一戳、内部回复再审、Pixiv 图片、照片 EXIF 定位、每日群聊分析和联网搜索插件均在各自配置中启用。每日群聊分析已有实际 LLM 调用日志，虽曾出现超时和空结果。
 - 联网搜索插件启用网页内容抓取及多个搜索后端；它不是专用行情工具，但可以获得不受资料库约束的外部网页内容。
 - 照片定位插件读取群内图片和文件的 EXIF GPS，向 OSM 或高德逆地理编码服务发送坐标，并在群内 @ 发图人显示地址。它会在 Core 日志中记录坐标和地址。
@@ -61,10 +62,10 @@ QQ 消息收发已经验证。当前升级没有改动端口、Token、QQ 登录
 
 ## 管理与网络
 
-- Core 和 NapCat 管理端口均只绑定服务器回环地址，通过 SSH 隧道访问。
-- 当前 Caddy 管理代理公开 `8080`，使用 Basic Auth 反向代理至 Core；其配置明确关闭自动 HTTPS。因此公网链路中的认证信息和 WebUI Token 没有传输加密保护。
+- Core 和 SnowLuma 管理端口均只绑定服务器回环地址，通过 SSH 隧道访问。SnowLuma OneBot `3001` 仅在 Compose 私有网络中提供给 Core Adapter；首次登录用 noVNC 映射已移除。
+- Caddy 管理代理公开 `8080`，使用 Basic Auth 反向代理至 Core；其 Basic Auth 与 WebUI Token 处于无 HTTPS 保护的链路中。
 - `sqlite-web` 是未启动的可选只读管理服务，仍只绑定回环地址。
-- Compose 使用私有 bridge 网络；NapCat 内部正向 WebSocket 使用 `3001`，不对主机公开。
+- Compose 使用私有 bridge 网络；SnowLuma OneBot WebSocket 使用 `3001`，不对主机公开。
 
 ## 明确限制与未核验项
 
