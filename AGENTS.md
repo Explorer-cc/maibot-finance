@@ -1,60 +1,68 @@
 # AGENTS.md
 
-## 项目定位
+## 项目定位与当前事实
 
-本仓库目前是 MaiBot 跨市场金融群聊人格助手的文档与部署配置仓库，不是 MaiBot 上游源码仓库。目标是在 Debian VM 上通过 Docker Compose 运行 MaiBot 1.0.12、MaiBot-Napcat-Adapter 与 NapCat，服务一个 allowlist 中的私有 QQ 群。
+本仓库是 MaiBot 私有 QQ 群聊人格助手的部署配置与文档仓库，不是 MaiBot 上游源码。当前运行实例位于 Debian VM，由 Docker Compose 管理。
 
-首个可用交付按 M0 -> M1 -> M2 -> M3 推进：**M0 已于 2026-07-29 完成真实验证**，即 QQ -> NapCat -> MaiBot -> DeepSeek -> QQ 回复的最小闭环。模型仅直连 DeepSeek（chat/推理）与 DashScope Qwen（VLM、embedding）。M2 是当前配置基线：已加载 DeepSeek `deepseek-v4-flash`、Qwen-VL `qwen3-vl-plus` 和 Qwen embedding `text-embedding-v4`，并在唯一 allowlist 群启用行为/表达/黑话学习、表情包收集、A_Memorix 查询、人物画像注入、群摘要和人物事实自动写回；引用回复保持关闭，MCP 保持关闭。M3 规划接入静态金融知识库及受限财经新闻 MCP，并完成模型实际调用、资料导入、静态检索、来源追溯、作用域隔离、故障降级和外部告警验证；不以人工审核或主观确认作为资料准入或上线门槛。交易能力、聚合模型网关、完整 Runbook 均不属于 v1。
+- `maibot-core`：MaiBot `1.1.4`，当前为 `healthy`。
+- `maibot-napcat`：NapCat `v4.18.18`，当前运行中。
+- Adapter：`85bec0059afed0a7fd83b35ff06d393114562f42`。
+- `public-maibot-admin`：当前运行中，并将公网 `8080` 以明文 HTTP 反向代理至 Core WebUI。
+- Core WebUI 仍仅绑定服务器 `127.0.0.1:18001`，NapCat WebUI 仅绑定 `127.0.0.1:6099`；本机 SSH 转发为 `20003 → 18001` 和 `20002 → 6099`。
+
+运行配置的唯一事实源是私有 `.env`、`runtime/` 和实际容器。尤其是 `runtime/core-config/bot_config.toml` 与 `runtime/core-config/model_config.toml`；仓库文档、模板和生成器均不能覆盖它们。
+
+## 已配置能力
+
+- 单一 QQ 群白名单；私聊白名单为空；Adapter 过滤机器人自身消息。
+- 人格、行为学习、表达学习、黑话学习、A_Memorix 查询、人物画像注入、人物事实写回和群摘要写回均已启用。
+- 群聊 `talk_value = 0.85`，私聊 `talk_value = 0`，引用回复关闭，富回复关闭。
+- 图片处理模式为 `auto`；表情包收集开启，内容过滤关闭。
+- MCP 关闭，且当前没有静态金融资料或金融资料索引。
+- 已登记的 API 提供商为 DeepSeek、DashScope、LLMX 和 ZhipuAI。回复、规划和通用任务配置了 `GLM5`、`gpt-5.6-terra` 与 `deepseek-v4-flash` 候选模型；视觉任务配置了 `gpt-5.6-terra` 与 `qwen-vl`，embedding 使用 `qwen-embedding`。
+- 第三方插件配置为启用的包括：智能戳一戳、内部回复再审、Pixiv 图片、照片 EXIF 定位、每日群聊分析和联网搜索。每日新闻、绘图、鹿管记录和 Emoji 文本选择插件配置为关闭。
 
 ## 文档优先级
 
 1. 用户在当前任务中的明确指令。
-2. `decision-log.md` 中最新且未被后续决策推翻的结论。
-3. `PRD.md` 的产品边界。
-4. `plan.md` 的执行顺序和验收项。
-5. `personas.md` 的 L0 人格文本。
+2. 当前 `runtime/`、私有 `.env` 与实际容器状态。
+3. `compose.yaml` 与运行脚本的可执行行为。
+4. `PRD.md`、`README.md`、`docs/` 与部署说明。
 
-发生冲突时，不要悄悄选择一种版本。更新较低优先级文档，或在 `decision-log.md` 中记录待决问题与影响。不要把历史决策记录当作当前配置来源。
+文档与运行配置冲突时，更新文档，不得改写 `runtime/` 以迎合文档。不要把 Git 历史当作当前配置来源。
 
 ## 配置与版本规则
 
-- MaiBot 版本锁定为 `1.0.12`；镜像、适配器、NapCat、模型标识、端口和配置键必须以该版本实施当天的官方发布说明和配置参考为准。
-- `runtime/` 是 Git 忽略的私有运行事实源；Core WebUI 保存的配置通过 bind mount 直接写入 `runtime/core-config/`。不得提交、导出或维护该目录的 Git 基线副本。
-- `deploy/bootstrap.py` 只可用 `--initialize` 创建缺失的私有运行文件，绝不能覆盖已存在的运行配置；覆盖仅限运营者显式提供 `--reset-config --yes-reset-config` 的恢复操作。`scripts/start.sh` 不得调用 bootstrap 或重写运行配置。
-- `scripts/preflight.py` 直接校验当前 `runtime/` 的安全边界与阶段必需能力，不得把后台可调的人格、回复、学习、表情和缓存参数锁回代码模板。
-- 文档中出现的配置字段、端口、容器数量或模型名是待验证的候选值，不能仅凭旧教程、搜索摘要或记忆写入生产配置。
-- 每次落实外部组件时，记录来源 URL、版本或 digest、查阅日期、实际配置和验证结果。模型 embedding 的维度必须以供应商返回或官方文档为准；变更 embedding 模型或维度前必须计划全量索引重建。
-- 不修改 MaiBot 核心源码来实现业务规则。若官方能力不能实现某项要求，优先使用受限的外层部署控制；不能验证时保留为待办，不伪造“已支持”。
+- 镜像、适配器、NapCat、模型标识、端口和配置键必须以当前锁定版本的官方资料和运行配置为准；镜像使用 digest，不使用 `latest`。
+- `runtime/` 是 Git 忽略的私有运行事实源。Core WebUI 的修改通过 bind mount 写入该目录；不得提交、导出或维护其 Git 基线副本。
+- `deploy/bootstrap.py --initialize` 只能创建缺失私有文件；`--reset-config --yes-reset-config` 会覆盖现有配置，只能在运营者明确要求恢复时使用。
+- 当前 `scripts/start.sh` 与 `scripts/preflight.py` 仍保留旧阶段参数接口；它们不应被当作当前配置能力的证明，也不得用于重写现有 `runtime/`。
+- `scripts/preflight.py` 只验证配置结构、端口约束、Token 和 Compose 渲染；它不验证模型实际调用、图片处理、聊天行为或 QQ 收发。
+- embedding 模型或维度变更前必须核验供应商实际返回，并计划全量索引重建。
 
-## 已确认边界
+## 安全与数据边界
 
-- 仅处理配置的一个 QQ 群；拒绝其他群、陌生私聊、临时会话和邀请事件。管理动作只能由 SSH 隧道后的受控管理入口发起，不得通过 QQ 身份、群角色或聊天文本触发。
-- M2 不接入任何实时数据工具，不得声称知道当前价格、公告或市场状态。M3 拟接入的财经新闻 MCP 仅限受控只读新闻，不等同于行情、交易或账户工具。
-- 永不接入交易账户、下单、撤单、资金划转、群管理、Docker 控制、Shell 或任意文件读写工具。
-- 人格以当前后端保存的“越菜越爱玩”激进投资群友为准：在金融话题中可兴奋、反讽并鼓动高风险讨论；任何后续人格修改须同步 `personas.md`、`decision-log.md`、`PRD.md` 与 `plan.md`。
-- 运营者已选择不做数据备份和数据泄露应急。该选择不取消最小权限、密钥隔离、日志脱敏、访问控制、删除能力或紧急停机要求；不得把“可恢复”写成 v1 的承诺。
+- 仅配置一个 QQ 群；陌生私聊与其他群不在 Adapter 白名单中。
+- MCP 关闭，未发现专用行情、交易、账户或资金划转插件；但联网搜索插件启用内容抓取和多个搜索后端，照片定位插件会读取 EXIF 并调用外部逆地理编码服务，Pixiv 插件会下载外部图片。不得将系统描述为没有联网、文件处理或第三方工具能力。
+- 每日群聊分析插件已启用自动汇总，空目标群列表按其实现表示所有活跃群；当前 Adapter 单群白名单限制了可见群，但插件自身没有重复设置该群白名单。智能戳一戳也配置为群聊和私聊均可响应，私聊实际仍由 Adapter 空白名单阻断。
+- 照片定位插件会对群内图片和文件读取 GPS EXIF，在命中后向外部地理编码服务发送坐标并 @ 发图人回复地址；它还会将坐标与地址写入 Core 日志。该行为与最小化处理和日志脱敏要求冲突，必须在任何文档、排障或扩展决策中如实说明。
+- 不得把模型回答、聊天记录或未导入资料表述为当前价格、公告或市场事实。
+- Core 配置中存在非空 `plugin.permission` QQ 标识。其能够授予的实际插件动作尚未按上游文档核验，因此不得宣称“QQ 不能触发任何管理动作”。
+- `public-maibot-admin` 当前公开 HTTP `8080`，有 Caddy Basic Auth，但用户名、密码和 WebUI Token 在公网链路中不具备 HTTPS 保护。NapCat 没有公网代理。
+- 第三方插件与插件代码目录以读写方式挂载到 Core；启用插件可在 Core 容器内执行任意插件 Python 代码，且容器能读取运行配置和访问网络。插件安装、升级和启用必须单独审查来源、权限与数据流向。
+- 运行期密钥、QQ 登录态、聊天记录、记忆、数据库、媒体和日志不得提交或外发。运营者未保留本地升级备份，不得承诺恢复这些数据。
 
-## 部署和数据处理
+## 文档要求
 
-- 运行期密钥、QQ 登录态、真实聊天数据、媒体、数据库、向量索引与日志不得提交。遵循 `.gitignore`，只提交无秘密的模板与示例。
-- 管理面优先使用 SSH 隧道或等效受控内网通道，不暴露到公网。若使用 `sqlite-web`，仅以只读、按需启动的管理工具运行，不为它创建可写的独立业务数据卷。
-- 将配置与运行期数据分离。没有备份时，只能回滚版本化的无秘密配置与可重新导入的知识清单，不能承诺恢复聊天记录、记忆或索引。
-- 日志使用关联 ID 并脱敏；不得记录 API 密钥、Cookie、QQ 登录态或不必要的完整私聊正文。
-
-## 文档与验收要求
-
-- 文档使用中文，保留明确的阶段标签（M0、M1、M2、M3、v1 扩展、v2）和可验证的完成条件。
-- 完成检查项前，先确认其依赖能力确实由锁定版本支持。将“配置”写成目标和证据，不把猜测的字段视为事实。
-- M0/M1/M2/M3 的硬安全测试不得因“同群测试”而跳过；跨群或跨私聊隔离使用本地 fixture、受控测试路由或实现级测试验证，不能拿生产群制造第二个真实会话。
-- M3 只以可复现的配置、资料元数据和行为测试作为通过依据；不设置人工审核、一周观察或主观质量确认门槛。
-- 修改产品范围、合规姿态、模型优先级、账号策略或数据保留策略时，同步检查 `PRD.md`、`plan.md`、`decision-log.md` 与 `personas.md` 的一致性。
+- 文档使用中文，只描述已配置、已验证的能力和明确限制；未验证能力标为“未核验”，不得写成已实现或既定目标。
+- 任何人格、模型、端口、数据保留、网络暴露或 QQ 范围变更，都应同步更新 `PRD.md`、`README.md`、`docs/implementation-audit.md` 与本文件。
+- 跨群或私聊隔离不在生产环境创建额外真实会话测试；应使用本地 fixture、受控路由或实现级测试。
 
 ## 常用检查
 
-文档变更后至少执行：
-
 ```bash
+docker-compose --env-file .env -f compose.yaml ps
 git diff --check
 git status --short
-rg -n "1\\.1\\.0|latest|实时行情|M0|M1|M2|v1|v2" PRD.md plan.md decision-log.md personas.md AGENTS.md
+rg -n "1\\.0\\.12|latest|实时行情|M[0-3]" README.md PRD.md AGENTS.md deploy docs knowledge .env.example
 ```

@@ -1,65 +1,55 @@
 # MaiBot 跨市场金融群聊人格助手
 
-基于 [MaiBot](https://github.com/MaiM-with-u/MaiBot) 1.0.12 的 QQ 群聊拟人化智能体，定位为**跨市场金融群聊人格助手**。
+基于 [MaiBot](https://github.com/MaiM-with-u/MaiBot) 1.1.4 的 QQ 群聊拟人化智能体。麦麦（MaiSaka）是一个长期生活在私有 QQ 群里的数字人格：平时正常闲聊；金融话题中保持“越菜越爱玩”的激进投资损友风格。
 
-麦麦（MaiSaka）是一个长期生活在 QQ 群里的数字人格——她是“越菜越爱玩”的激进投资损友：金融话题中会兴奋、反讽，并以夸张高风险策略推动讨论。
+本仓库是部署配置与文档仓库，不是 MaiBot 上游源码。MaiBot 通过 Docker Compose 以锁定版本运行，不修改其核心源码。
 
-> 本仓库是部署配置与文档仓库，不是 MaiBot 上游源码。MaiBot 通过 Docker Compose 以锁定版本运行，不修改其核心源码。
+## 当前运行基线
 
-## 当前状态
+- MaiBot Core/WebUI：`1.1.4`；镜像以私有 `.env` 中的 digest 锁定。
+- QQ 接入：NapCat Docker `v4.18.18` 与 MaiBot-Napcat-Adapter `85bec0059afed0a7fd83b35ff06d393114562f42`。
+- 模型：当前配置登记 DeepSeek、DashScope、LLMX、ZhipuAI 四个 API 提供商；实际任务分配见 [`PRD.md`](PRD.md)。embedding 配置为 `qwen-embedding`、维度 `1024`，实际响应尚未记录。
+- 群聊能力：唯一 allowlist 群、行为/表达/黑话学习、表情包收集、A_Memorix 查询、人物画像注入、群摘要与人物事实自动写回。引用回复和富回复均关闭。
+- 插件：除 NapCat Adapter 外，当前配置还启用了智能戳一戳、内部回复再审、Pixiv 图片、照片 EXIF 定位、每日群聊分析和联网搜索插件；详细作用域与风险见 [`docs/implementation-audit.md`](docs/implementation-audit.md)。
+- 已验证：Core 健康、NapCat 连接以及 QQ 消息收发正常。
 
-- **M0（已完成，2026-07-29）**：单群 allowlist 下的 `QQ → NapCat → MaiBot → DeepSeek → QQ` 最小闭环已通过真实消息往返验证。
-- **当前后端配置基线（2026-07-29）**：已健康加载 DeepSeek `deepseek-v4-flash`、Qwen-VL（`qwen3-vl-plus`）与 Qwen embedding（`text-embedding-v4`），并在唯一群开启 MaiBot 原生行为/表达/黑话学习、表情包收集、A_Memorix 查询、人物画像注入和自动写回。`.env` 声明 embedding 维度为 `1024`，真实 API 响应仍待验证。
-- **M2（配置基线已完成）**：当前模型、人格、A_Memorix 与关闭引用回复均已同步到配置生成器，并通过预检。
-- **M3（规划，未实现）**：接入 `common`/`crypto` 静态金融知识库与受限财经新闻 MCP，并完成模型实际调用、来源可追溯检索、作用域隔离、故障降级与外部告警。
+## 运行边界
 
-## 核心边界
-
-以下边界是产品的硬约束，不是待办：
-
-- 仅服务一个 allowlist 中的私有 QQ 群，拒绝其他群、陌生私聊与临时会话。
-- **M2 不接入实时数据；M3 仅规划受限只读财经新闻 MCP，不接入行情、交易、下单、撤单或资金划转能力。**
-- 金融话题遵循当前后端人格：可使用激进投资策略、梭哈和高杠杆等表达推动群聊讨论。
-- 运行期密钥、QQ 登录态、真实聊天数据、数据库、向量索引与日志不入库。
+- 仅服务一个 allowlist 中的私有 QQ 群；拒绝其他群、陌生私聊和临时会话。
+- MCP 保持关闭，当前未导入静态金融资料或建立金融资料索引。
+- 未发现专用行情、交易、下单、撤单或资金划转插件；但联网搜索、图片下载、EXIF 定位、群聊统计和第三方 Python 插件均已存在，不能将本实例描述为“没有外部工具”。
+- `core`、`napcat` 与 `sqlite-web` 仅绑定服务器 `127.0.0.1`。本机 SSH 配置保持 `20003 → 18001`（MaiBot WebUI）和 `20002 → 6099`（NapCat WebUI）。
+- 当前 `public-maibot-admin` 公开 HTTP `8080` 并代理 Core WebUI；它使用 Basic Auth，但没有 HTTPS 保护。
+- 运行期密钥、QQ 登录态、聊天记录、数据库、记忆、媒体和日志均在 Git 忽略的 `runtime/` 与 `.env` 中，不得提交。
 
 ## 技术架构
 
-通过 Docker Compose 运行 core、NapCat 与可选管理服务（见 [`compose.yaml`](compose.yaml)）：
-
 | 服务 | 作用 |
 | --- | --- |
-| `core` | MaiBot 核心：人格表达、群聊观察、回复时机、关系记忆、插件与 WebUI |
-| `napcat` | NapCat Adapter + NapCat：QQ 消息接入（社区 NTQQ 协议，需单独评估账号风险） |
-| `sqlite-web` | 可选只读管理工具（`admin` profile），按需经 SSH 隧道启动 |
-| `public-maibot-admin` | 可选独立 Caddy 代理（`public-admin` profile）；仅代理 MaiBot 公网入口（运营者接受明文传输风险） |
-
-模型后端仅涉及 DeepSeek（chat）与 DashScope Qwen（VLM、embedding）。当前 A_Memorix 查询已启用；M3 再导入静态金融资料并验证其召回。
-
-`core`、`napcat` 与 `sqlite-web` 仍仅绑定服务器 `127.0.0.1`。如启用公网管理入口，只有 `public-maibot-admin` 公开 `8080`（MaiBot）；这是明确记录的明文 HTTP 例外。NapCat 管理面仅经 SSH 隧道访问，配置与验收步骤见 [`deploy/README.md`](deploy/README.md)。
+| `core` | MaiBot 核心：人格、群聊观察、回复、记忆、插件与 WebUI |
+| `napcat` | NapCat 与 Adapter：QQ 消息接入；属于社区 NTQQ 协议方案，存在账号风险 |
+| `sqlite-web` | 可选只读管理工具，按需通过 SSH 隧道使用 |
+| `public-maibot-admin` | 当前运行的 Caddy 管理代理；公开 HTTP `8080` 并存在明文传输风险 |
 
 ## 目录结构
 
-```
+```text
 .
 ├── compose.yaml        # 容器编排
-├── .env.example        # 配置模板（真实 .env 不入库）
-├── runtime/            # 运行期数据：配置、数据库、登录态、向量索引（不入库）
-├── scripts/            # 启停、预检、知识 manifest 校验脚本
-├── deploy/             # 部署引导脚本
-├── knowledge/          # M3 静态金融资料与 manifest
+├── .env.example        # 配置模板；真实 .env 不入库
+├── runtime/            # 配置、数据库、登录态、记忆与缓存；不入库
+├── scripts/            # 启停、预检与资料 manifest 校验脚本
+├── deploy/             # 私有运行配置初始化工具与部署说明
+├── knowledge/          # 预留的静态资料目录；当前没有已导入资料
 ├── logs/               # 脱敏结构化日志
-└── docs/               # 实现审计与待办事项
+└── docs/               # 当前实现审计与运行事项
 ```
 
 ## 核心文档
 
-文档发生冲突时按 [`AGENTS.md`](AGENTS.md) 中的优先级裁决；不要把历史决策记录当作当前配置来源。
-
-- [`PRD.md`](PRD.md) — 产品需求基线与边界
-- [`plan.md`](plan.md) — 执行顺序与验收项
-- [`decision-log.md`](decision-log.md) — 关键决策记录
-- [`personas.md`](personas.md) — L0 人格文本
-- [`AGENTS.md`](AGENTS.md) — 仓库约定与配置/版本规则
+- [`PRD.md`](PRD.md) — 当前产品范围、实际模型配置与能力边界
+- [`deploy/README.md`](deploy/README.md) — 已有实例的受控运维
+- [`AGENTS.md`](AGENTS.md) — 仓库约定
 
 ## 许可证
 
