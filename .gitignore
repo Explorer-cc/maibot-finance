@@ -18,6 +18,7 @@ id_rsa*
 *.secret
 credentials*.json
 service-account*.json
+test_image_api.sh
 
 # QQ 凭据 / NapCat 登录态 / session
 qq_session*
