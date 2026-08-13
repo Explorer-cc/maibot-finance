@@ -10,6 +10,7 @@ services:
       MAIBOT_LEGACY_0X_UPGRADE_CONFIRMED: "1"
       MAIBOT_STATISTICS_REPORT_PATH: /MaiMBot/data/maibot_statistics.html
       WEBUI_HOST: 0.0.0.0
+      UV_DEFAULT_INDEX: https://pypi.org/simple
     ports:
       - "127.0.0.1:${WEBUI_PORT}:8001"
     volumes:
