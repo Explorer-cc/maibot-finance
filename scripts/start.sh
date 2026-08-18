@@ -14,6 +14,6 @@ fi
 
 bash ./scripts/host-check.sh
 .venv/bin/python scripts/preflight.py --phase "$phase" --compose
-docker-compose --env-file .env -f compose.yaml pull
-docker-compose --env-file .env -f compose.yaml up -d --remove-orphans
-docker-compose --env-file .env -f compose.yaml ps
+docker-compose --env-file .env -f compose.yaml --profile snowluma pull core snowluma
+docker-compose --env-file .env -f compose.yaml --profile snowluma up -d --remove-orphans core snowluma
+docker-compose --env-file .env -f compose.yaml --profile snowluma ps core snowluma

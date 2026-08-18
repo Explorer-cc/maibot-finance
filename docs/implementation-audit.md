@@ -7,7 +7,7 @@
 | 项目 | 当前事实 |
 | --- | --- |
 | MaiBot | `1.1.4`；镜像 digest 由私有 `.env` 锁定 |
-| SnowLuma | `v1.14.3`；WebUI 仅绑定服务器 `127.0.0.1:5099`；OneBot `3001` 仅限 Compose 私有网络 |
+| SnowLuma | `v1.14.3`；WebUI 绑定服务器 `127.0.0.1:5099`，noVNC 固定绑定 `127.0.0.1:6081`；OneBot `3001` 仅限 Compose 私有网络 |
 | Adapter | MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 已启用；NapCat Adapter 已禁用 |
 | NapCat | `v4.18.18` 已停止，数据与配置保留以便回滚 |
 | Core 管理面 | `127.0.0.1:18001`；本地 SSH 转发为 `20003` |

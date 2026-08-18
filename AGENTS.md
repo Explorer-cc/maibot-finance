@@ -9,7 +9,7 @@
 - Adapter：MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 当前启用。NapCat Adapter 已禁用。
 - `maibot-napcat`：NapCat `v4.18.18`，当前停止并保留回滚资料；不得与 SnowLuma 同时登录生产 QQ。
 - `public-maibot-admin`：当前运行，并将公网 `8080` 以明文 HTTP 反向代理至 Core WebUI。
-- Core WebUI 仅绑定服务器 `127.0.0.1:18001`，SnowLuma WebUI 仅绑定 `127.0.0.1:5099`；本机 SSH 转发为 `20003 → 18001` 和 `20004 → 5099`。SnowLuma noVNC 与 OneBot `3001` 不映射到宿主机。
+- Core WebUI 仅绑定服务器 `127.0.0.1:18001`，SnowLuma WebUI 仅绑定 `127.0.0.1:5099`，SnowLuma noVNC 固定绑定服务器 `127.0.0.1:6081`；本机 SSH 转发为 `20003 → 18001` 和 `20004 → 5099`。OneBot `3001` 不映射到宿主机。
 - 已实际验证唯一白名单群的 SnowLuma 入站文本与 MaiBot 出站回复。旧表情/GIF、语音、文件及其他特殊消息段尚未完成迁移后 QQ 验证，不得表述为已兼容。
 - 迁移前完整私有回滚备份仍在 `runtime/backups/`；稳定观察通过并由运营者确认精确目标前不得删除。NapCat 容器、配置与私有登录态按运营者决定保留，不得自行删除。
 
@@ -53,7 +53,7 @@
 - 不得把模型回答、聊天记录或未导入资料表述为当前价格、公告或市场事实。
 - Core 配置中存在非空 `plugin.permission` QQ 标识。其能够授予的实际插件动作尚未按上游文档核验，因此不得宣称“QQ 不能触发任何管理动作”。
 - `public-maibot-admin` 当前公开 HTTP `8080`，有 Caddy Basic Auth，但用户名、密码和 WebUI Token 在公网链路中不具备 HTTPS 保护。SnowLuma 与 NapCat 均没有公网代理。
-- SnowLuma noVNC `6081` 仅在容器内暴露，不映射宿主机；`compose.snowluma-login.yaml` 仅可在未来受控登录维护窗口临时使用，使用后必须以基础 Compose 强制重建 SnowLuma 以撤销映射。
+- SnowLuma noVNC `6081` 日常固定映射到宿主机回环地址 `127.0.0.1`，供本机或 SSH 隧道维护；不得映射到公网地址。VNC `5900` 与 OneBot `3001` 均不映射宿主机。`compose.snowluma-login.yaml` 是历史兼容覆盖文件，不再用于改变 noVNC 端口暴露。
 - 第三方插件与插件代码目录以读写方式挂载到 Core；启用插件可在 Core 容器内执行任意插件 Python 代码，且容器能读取运行配置和访问网络。插件安装、升级和启用必须单独审查来源、权限与数据流向。
 - 运行期密钥、QQ 登录态、聊天记录、记忆、数据库、媒体和日志不得提交或外发。当前仅保留本次迁移前的私有回滚备份；不得将其表述为已验证的数据恢复保证。
 

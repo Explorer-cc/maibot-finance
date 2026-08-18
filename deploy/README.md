@@ -15,10 +15,10 @@
 docker-compose --env-file .env -f compose.yaml ps
 ```
 
-按当前配置启动或恢复 Core 与 NapCat：
+按当前配置启动或恢复 Core 与 SnowLuma（显式服务名，绝不拉起 NapCat）：
 
 ```bash
-docker-compose --env-file .env -f compose.yaml up -d core napcat
+docker-compose --env-file .env -f compose.yaml --profile snowluma up -d core snowluma
 ```
 
 ## SnowLuma 预置与首次登录
@@ -29,7 +29,7 @@ SnowLuma 只通过显式 profile 启动，且当前阶段不得停止或替换 N
 docker-compose --env-file .env -f compose.yaml --profile snowluma up -d snowluma
 ```
 
-这会仅绑定 SnowLuma WebUI 到服务器 `127.0.0.1:5099`。OneBot `3001` 不映射到主机，VNC `5900` 永不映射。首次生产 QQ 登录只能在维护窗口发生，届时才临时叠加 `compose.snowluma-login.yaml` 开放服务器回环 `6081`，并使用 SSH 转发访问 noVNC；登录确认后必须移除该覆盖文件启动的端口映射。
+这会绑定 SnowLuma WebUI 到服务器 `127.0.0.1:5099`，并日常保留 noVNC 回环映射 `127.0.0.1:6081`，可经本机或 SSH 隧道维护。OneBot `3001` 不映射到主机，VNC `5900` 永不映射；不得将 noVNC 映射到公网地址。`compose.snowluma-login.yaml` 是历史兼容覆盖文件，不再用于改变 noVNC 端口暴露。
 
 该命令使用现有 bind mount 的 `runtime/`，不会初始化或重置配置。启动后检查 Core 为 `healthy`，并在唯一 allowlist 群进行一次无敏感的消息收发确认。
 
@@ -50,7 +50,7 @@ docker-compose --env-file .env -f compose.yaml --profile snowluma up -d snowluma
 ## 只读管理与排障
 
 ```bash
-docker-compose --env-file .env -f compose.yaml logs -f core napcat
+docker-compose --env-file .env -f compose.yaml logs -f core snowluma
 docker-compose --env-file .env -f compose.yaml --profile admin up -d sqlite-web
 ```
 

@@ -11,7 +11,7 @@
 | 组件 | 当前状态 |
 | --- | --- |
 | MaiBot Core | `1.1.4`，`maibot-core` 为 `healthy` |
-| SnowLuma | `v1.14.3`，`maibot-snowluma` 正在运行；WebUI 仅绑定 `127.0.0.1:5099` |
+| SnowLuma | `v1.14.3`，`maibot-snowluma` 正在运行；WebUI 绑定 `127.0.0.1:5099`，noVNC 固定绑定 `127.0.0.1:6081` |
 | Adapter | MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 已启用；NapCat Adapter 已禁用 |
 | NapCat | `v4.18.18`，`maibot-napcat` 已停止并保留回滚资料 |
 | 管理代理 | `public-maibot-admin` 正在运行，公网监听 HTTP `8080` |
@@ -62,7 +62,7 @@
 
 ## 管理与网络
 
-- Core 和 SnowLuma 管理端口均只绑定服务器回环地址，通过 SSH 隧道访问。SnowLuma OneBot `3001` 仅在 Compose 私有网络中提供给 Core Adapter；首次登录用 noVNC 映射已移除。
+- Core 和 SnowLuma 管理端口均只绑定服务器回环地址，通过 SSH 隧道访问。SnowLuma noVNC 固定使用回环 `127.0.0.1:6081`，可供日常维护；OneBot `3001` 仅在 Compose 私有网络中提供给 Core Adapter。
 - Caddy 管理代理公开 `8080`，使用 Basic Auth 反向代理至 Core；其 Basic Auth 与 WebUI Token 处于无 HTTPS 保护的链路中。
 - `sqlite-web` 是未启动的可选只读管理服务，仍只绑定回环地址。
 - Compose 使用私有 bridge 网络；SnowLuma OneBot WebSocket 使用 `3001`，不对主机公开。

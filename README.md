@@ -18,7 +18,7 @@
 - 仅服务一个 allowlist 中的私有 QQ 群；拒绝其他群、陌生私聊和临时会话。
 - MCP 保持关闭，当前未导入静态金融资料或建立金融资料索引。
 - 未发现专用行情、交易、下单、撤单或资金划转插件；但联网搜索、图片下载、EXIF 定位、群聊统计和第三方 Python 插件均已存在，不能将本实例描述为“没有外部工具”。
-- `core`、`snowluma` 与 `sqlite-web` 仅绑定服务器 `127.0.0.1`。本机 SSH 转发可使用 `20003 → 18001`（MaiBot WebUI）和 `20004 → 5099`（SnowLuma WebUI）；SnowLuma noVNC 和 OneBot 端口不对宿主机公开。
+- `core`、`snowluma` 与 `sqlite-web` 的管理端口仅绑定服务器 `127.0.0.1`。本机 SSH 转发可使用 `20003 → 18001`（MaiBot WebUI）和 `20004 → 5099`（SnowLuma WebUI）；SnowLuma noVNC 固定绑定回环 `6081`，便于日常本机或 SSH 隧道维护；OneBot `3001` 不映射到宿主机。
 - `public-maibot-admin` 当前公开 HTTP `8080` 并代理 Core WebUI；它使用 Basic Auth，但没有 HTTPS 保护。
 - 运行期密钥、QQ 登录态、聊天记录、数据库、记忆、媒体和日志均在 Git 忽略的 `runtime/` 与 `.env` 中，不得提交。
 

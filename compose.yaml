@@ -34,6 +34,7 @@ services:
   napcat:
     image: ${NAPCAT_IMAGE}
     container_name: maibot-napcat
+    profiles: ["napcat"]
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
@@ -75,6 +76,7 @@ services:
       SNOWLUMA_ACCEPT_PRIVACY: ${SNOWLUMA_ACCEPT_PRIVACY}
     ports:
       - "127.0.0.1:${SNOWLUMA_WEBUI_PORT}:5099"
+      - "127.0.0.1:${SNOWLUMA_NOVNC_PORT}:6081"
     volumes:
       - ./runtime/snowluma/data:/app/data
       - ./runtime/snowluma/qq-config:/app/.config

@@ -6,6 +6,7 @@
 
 - `.env` 中锁定 MaiBot、NapCat、sqlite-web 与 Caddy 的镜像 digest；不得改为 tag 或 `latest`。
 - Core WebUI、NapCat WebUI 与 sqlite-web 保持服务器回环绑定；既有 SSH 转发保持不变。
+- SnowLuma WebUI `5099` 与 noVNC `6081` 均固定绑定服务器回环；noVNC 用于日常本机或 SSH 隧道维护，不得映射到公网。
 - 唯一生产群、WebUI Token、NapCat WebUI Token 和内部 WebSocket Token 均为私有值，不得复用或外泄。
 - DeepSeek 与 DashScope 凭据只保存在 `.env`；模型名称和 embedding 配置以当前运行值为准。
 - Adapter 当前拒绝普通私聊和第二个群，MCP 保持关闭；但已启用联网搜索、外部图片下载、EXIF 定位和群聊分析插件。不要将本实例描述为没有联网或外部工具。
@@ -18,10 +19,10 @@
 docker-compose --env-file .env -f compose.yaml ps
 ```
 
-确认 Core 与 NapCat 已启动：
+确认 Core 与 SnowLuma 已启动（显式服务名，绝不拉起 NapCat）：
 
 ```bash
-docker-compose --env-file .env -f compose.yaml up -d core napcat
+docker-compose --env-file .env -f compose.yaml --profile snowluma up -d core snowluma
 ```
 
 这两个命令使用现有 `runtime/`，不重置配置。不要为日常运维运行 `deploy/bootstrap.py`，也不要执行 `--reset-config --yes-reset-config`。
@@ -34,7 +35,7 @@ docker-compose --env-file .env -f compose.yaml up -d core napcat
 ./scripts/start-public-admin.sh
 ```
 
-仅开放公网 TCP `8080`；不得开放 `18001`、`6099`、`8120` 或 `3001`。Basic Auth 通过后仍须输入 MaiBot 原有 WebUI Token。NapCat 始终仅经 SSH 隧道管理。
+仅开放公网 TCP `8080`；不得开放 `18001`、`6081`、`6099`、`8120` 或 `3001`。Basic Auth 通过后仍须输入 MaiBot 原有 WebUI Token。NapCat 始终仅经 SSH 隧道管理。
 
 ## 尚待记录的验证证据
 
