@@ -1,0 +1,28 @@
+--- a/src/A_memorix/core/storage/graph_store.py
++++ b/src/A_memorix/core/storage/graph_store.py
+@@ -224,8 +224,24 @@
+             "edge_hash_map": self._serialize_edge_hash_map(),
+         }
+         if self._adjacency is not None:
+-            with (temporary_dir / "graph_adjacency.npz").open("wb") as handle:
++            snapshot_matrix_path = temporary_dir / "graph_adjacency.npz"
++            with atomic_write(snapshot_matrix_path, "wb") as handle:
+                 save_npz(handle, self._adjacency)
++            if snapshot_matrix_path.stat().st_size == 0:
++                raise RuntimeError(f"图快照邻接矩阵写入为空: {snapshot_matrix_path}")
++            try:
++                validated_adjacency = load_npz(str(snapshot_matrix_path))
++            except Exception as exc:
++                raise RuntimeError(f"图快照邻接矩阵读回校验失败: {snapshot_matrix_path}") from exc
++            if (
++                validated_adjacency.shape != self._adjacency.shape
++                or validated_adjacency.nnz != self._adjacency.nnz
++            ):
++                raise RuntimeError(
++                    "图快照邻接矩阵读回校验不一致: "
++                    f"expected=(shape={self._adjacency.shape}, nnz={self._adjacency.nnz}), "
++                    f"actual=(shape={validated_adjacency.shape}, nnz={validated_adjacency.nnz})"
++                )
+         _write_json_object(temporary_dir / "graph_metadata.json", snapshot_metadata)
+         temporary_dir.replace(snapshot_dir)
+         return generation

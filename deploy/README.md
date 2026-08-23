@@ -4,10 +4,10 @@
 
 ## 当前服务与访问方式
 
-- MaiBot WebUI：服务器 `127.0.0.1:18001`，本机 SSH 转发 `http://127.0.0.1:20003/`。
-- NapCat WebUI：服务器 `127.0.0.1:6099`，本机 SSH 转发 `http://127.0.0.1:20002/`。
-- Core、NapCat、可选 Caddy 管理代理由 `compose.yaml` 管理。
-- SnowLuma 已预置为 `snowluma` profile，但当前不运行、不登录 QQ，也不接管 Core；其 Adapter 在维护窗口前不得安装到 Core 插件目录。
+- MaiBot Core/WebUI `1.2.1`：服务器 `127.0.0.1:18001`，本机 SSH 转发 `http://127.0.0.1:20003/`。
+- NapCat `v4.18.18` WebUI：服务器 `127.0.0.1:6099`，本机 SSH 转发 `http://127.0.0.1:20002/`；NapCat 当前停止，仅保留回滚资料。
+- Core、NapCat、SnowLuma 与可选 Caddy 管理代理由 `compose.yaml` 管理。
+- SnowLuma `v1.14.3` 当前运行并接管 QQ；其 Adapter 使用固定提交 `403de73785d1755a9a6b9828e403ed30399b638d`。
 
 查看状态：
 
@@ -23,13 +23,13 @@ docker-compose --env-file .env -f compose.yaml --profile snowluma up -d core sno
 
 ## SnowLuma 预置与首次登录
 
-SnowLuma 只通过显式 profile 启动，且当前阶段不得停止或替换 NapCat：
+SnowLuma 通过显式 `snowluma` profile 启动；当前生产接入由 SnowLuma 接管，NapCat 保持停止，仅用于回滚：
 
 ```bash
 docker-compose --env-file .env -f compose.yaml --profile snowluma up -d snowluma
 ```
 
-这会绑定 SnowLuma WebUI 到服务器 `127.0.0.1:5099`，并日常保留 noVNC 回环映射 `127.0.0.1:6081`，可经本机或 SSH 隧道维护。OneBot `3001` 不映射到主机，VNC `5900` 永不映射；不得将 noVNC 映射到公网地址。`compose.snowluma-login.yaml` 是历史兼容覆盖文件，不再用于改变 noVNC 端口暴露。
+这会绑定 SnowLuma WebUI 到服务器 `127.0.0.1:5099`，并保留 noVNC 回环映射 `127.0.0.1:6081`，可经本机或 SSH 隧道维护。OneBot `3001` 不映射到主机，VNC `5900` 永不映射；不得将 noVNC 映射到公网地址。`compose.snowluma-login.yaml` 是历史兼容覆盖文件，不再用于改变 noVNC 端口暴露。
 
 该命令使用现有 bind mount 的 `runtime/`，不会初始化或重置配置。启动后检查 Core 为 `healthy`，并在唯一 allowlist 群进行一次无敏感的消息收发确认。
 

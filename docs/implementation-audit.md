@@ -1,12 +1,12 @@
-# 当前部署实现审计（更新至 2026-08-09）
+# 当前部署实现审计（更新至 2026-08-23）
 
 ## 结论
 
-当前实例运行 MaiBot `1.1.4`；Core 为 `healthy`，SnowLuma 是唯一运行中的 QQ 网关，唯一 allowlist 群的入站文本与 MaiBot 出站回复已验证。Core 数据库、记忆、聊天记录与表情目录未迁移或重置。
+当前实例运行 MaiBot `1.2.1`；Core 为 `healthy`，SnowLuma 是唯一运行中的 QQ 网关，唯一 allowlist 群的入站文本与 MaiBot 出站回复已验证。升级将 Core schema 从 `36` 迁移到 `40`；数据库、A_Memorix 记忆、聊天记录与表情目录未重置。升级后的 SQLite 与 A_Memorix metadata `quick_check` 均通过，既有记忆表行数、向量 ID 集合和向量二进制保持一致。
 
 | 项目 | 当前事实 |
 | --- | --- |
-| MaiBot | `1.1.4`；镜像 digest 由私有 `.env` 锁定 |
+| MaiBot | `1.2.1`；镜像 digest 由私有 `.env` 锁定；Core schema `40` |
 | SnowLuma | `v1.14.3`；WebUI 绑定服务器 `127.0.0.1:5099`，noVNC 固定绑定 `127.0.0.1:6081`；OneBot `3001` 仅限 Compose 私有网络 |
 | Adapter | MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 已启用；NapCat Adapter 已禁用 |
 | NapCat | `v4.18.18` 已停止，数据与配置保留以便回滚 |
@@ -15,7 +15,7 @@
 | 记忆与学习 | A_Memorix 查询、人物画像注入、群摘要/事实写回、行为/表达/黑话学习和表情包收集均已开启；富回复关闭，表情包内容过滤关闭 |
 | 渠道隔离 | 单群白名单、私聊白名单为空、自身消息过滤开启 |
 | MCP 与工具 | MCP 关闭；没有专用行情或交易插件，但存在联网搜索、图片下载、EXIF 定位、群聊分析和第三方 Python 插件 |
-| 公网管理面 | Caddy 代理公开 `0.0.0.0:8080`，使用 Basic Auth 但没有 HTTPS |
+| 公网管理面 | `public-maibot-admin` 当前未运行；其 Caddy 配置若启动将公开 `0.0.0.0:8080`，使用 Basic Auth 但没有 HTTPS |
 
 ## 插件审计
 
@@ -37,7 +37,7 @@
 - 当前没有已导入的静态金融资料或金融资料索引。
 - 没有外部告警系统；容器状态与 QQ 连接需由运营者通过受控管理入口检查。
 - 维护窗口生成了一份私有回滚备份；稳定观察完成并经运营者确认精确目标前不得删除，且不得承诺其能恢复未验证的数据。
-- `public-maibot-admin` 当前运行；用户名、密码和应用 Token 可能在公网 HTTP 链路暴露。
+- `public-maibot-admin` 当前未运行；若启动，用户名、密码和应用 Token 可能在公网 HTTP 链路暴露。
 - 旧表情/GIF、语音、文件及特殊 OneBot 消息段尚未完成迁移后 QQ 验证。
 - Core 的 `plugin.permission` 含有 QQ 标识；其权限语义尚未按上游文档核验。
 - Core 以读写方式挂载整个插件目录。所有启用的第三方插件都在 Core 容器权限范围内运行，可读取可见聊天、访问网络，并可能接触运行配置；没有沙箱隔离。

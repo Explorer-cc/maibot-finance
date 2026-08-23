@@ -78,9 +78,9 @@ def require(values: dict[str, str], names: tuple[str, ...]) -> None:
     if len(values["NAPCAT_WEBUI_TOKEN"]) < 20:
         raise ValueError("NAPCAT_WEBUI_TOKEN 至少需要 20 个字符")
     if values["MAIBOT_EULA_AGREE"] != MAIBOT_EULA_AGREEMENT:
-        raise ValueError("MAIBOT_EULA_AGREE 不匹配锁定 MaiBot 1.1.4 的 EULA 确认值")
+        raise ValueError("MAIBOT_EULA_AGREE 不匹配当前锁定 MaiBot 镜像的 EULA 确认值")
     if values["MAIBOT_PRIVACY_AGREE"] != MAIBOT_PRIVACY_AGREEMENT:
-        raise ValueError("MAIBOT_PRIVACY_AGREE 不匹配锁定 MaiBot 1.1.4 的隐私确认值")
+        raise ValueError("MAIBOT_PRIVACY_AGREE 不匹配当前锁定 MaiBot 镜像的隐私确认值")
     embedding_dimension = values.get("QWEN_EMBEDDING_DIMENSION", "")
     if embedding_dimension and not PLACEHOLDER.match(embedding_dimension) and (
         not re.fullmatch(r"[0-9]+", embedding_dimension) or int(embedding_dimension) <= 0

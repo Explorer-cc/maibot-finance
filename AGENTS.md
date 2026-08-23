@@ -4,11 +4,11 @@
 
 本仓库是 MaiBot 私有 QQ 群聊人格助手的部署配置与文档仓库，不是 MaiBot 上游源码。当前运行实例位于 Debian VM，由 Docker Compose 管理。
 
-- `maibot-core`：MaiBot `1.1.4`，当前为 `healthy`。
+- `maibot-core`：MaiBot `1.2.1`，当前为 `healthy`；Core schema `40`，已完成 `36 → 40` 无损迁移核验。
 - `maibot-snowluma`：SnowLuma `v1.14.3`，当前运行中；其容器具备 `SYS_PTRACE` 与 `seccomp=unconfined`。
 - Adapter：MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 当前启用。NapCat Adapter 已禁用。
 - `maibot-napcat`：NapCat `v4.18.18`，当前停止并保留回滚资料；不得与 SnowLuma 同时登录生产 QQ。
-- `public-maibot-admin`：当前运行，并将公网 `8080` 以明文 HTTP 反向代理至 Core WebUI。
+- `public-maibot-admin`：当前未运行；Compose 保留其配置，启动后会将公网 `8080` 以明文 HTTP 反向代理至 Core WebUI。
 - Core WebUI 仅绑定服务器 `127.0.0.1:18001`，SnowLuma WebUI 仅绑定 `127.0.0.1:5099`，SnowLuma noVNC 固定绑定服务器 `127.0.0.1:6081`；本机 SSH 转发为 `20003 → 18001` 和 `20004 → 5099`。OneBot `3001` 不映射到宿主机。
 - 已实际验证唯一白名单群的 SnowLuma 入站文本与 MaiBot 出站回复。旧表情/GIF、语音、文件及其他特殊消息段尚未完成迁移后 QQ 验证，不得表述为已兼容。
 - 迁移前完整私有回滚备份仍在 `runtime/backups/`；稳定观察通过并由运营者确认精确目标前不得删除。NapCat 容器、配置与私有登录态按运营者决定保留，不得自行删除。
@@ -19,7 +19,7 @@
 
 - 单一 QQ 群白名单；私聊白名单为空；Adapter 过滤机器人自身消息。
 - 人格、行为学习、表达学习、黑话学习、A_Memorix 查询、人物画像注入、人物事实写回和群摘要写回均已启用。
-- 群聊 `talk_value = 0.85`，私聊 `talk_value = 0`，引用回复关闭，富回复关闭。
+- 群聊 `talk_value = 0.75`，私聊 `talk_value = 0`，引用回复关闭，富回复关闭。
 - 图片处理模式为 `auto`；表情包收集开启，内容过滤关闭。
 - MCP 关闭，且当前没有静态金融资料或金融资料索引。
 - 已登记的 API 提供商为 DeepSeek、DashScope、LLMX 和 ZhipuAI。回复、规划和通用任务配置了 `GLM5`、`gpt-5.6-terra` 与 `deepseek-v4-flash` 候选模型；视觉任务配置了 `gpt-5.6-terra` 与 `qwen-vl`，embedding 使用 `qwen-embedding`。
@@ -52,7 +52,7 @@
 - 照片定位插件会对群内图片和文件读取 GPS EXIF，在命中后向外部地理编码服务发送坐标并 @ 发图人回复地址；它还会将坐标与地址写入 Core 日志。该行为与最小化处理和日志脱敏要求冲突，必须在任何文档、排障或扩展决策中如实说明。
 - 不得把模型回答、聊天记录或未导入资料表述为当前价格、公告或市场事实。
 - Core 配置中存在非空 `plugin.permission` QQ 标识。其能够授予的实际插件动作尚未按上游文档核验，因此不得宣称“QQ 不能触发任何管理动作”。
-- `public-maibot-admin` 当前公开 HTTP `8080`，有 Caddy Basic Auth，但用户名、密码和 WebUI Token 在公网链路中不具备 HTTPS 保护。SnowLuma 与 NapCat 均没有公网代理。
+- `public-maibot-admin` 当前未运行；其配置若启动将公开 HTTP `8080`，虽有 Caddy Basic Auth，但用户名、密码和 WebUI Token 在公网链路中不具备 HTTPS 保护。SnowLuma 与 NapCat 均没有公网代理。
 - SnowLuma noVNC `6081` 日常固定映射到宿主机回环地址 `127.0.0.1`，供本机或 SSH 隧道维护；不得映射到公网地址。VNC `5900` 与 OneBot `3001` 均不映射宿主机。`compose.snowluma-login.yaml` 是历史兼容覆盖文件，不再用于改变 noVNC 端口暴露。
 - 第三方插件与插件代码目录以读写方式挂载到 Core；启用插件可在 Core 容器内执行任意插件 Python 代码，且容器能读取运行配置和访问网络。插件安装、升级和启用必须单独审查来源、权限与数据流向。
 - 运行期密钥、QQ 登录态、聊天记录、记忆、数据库、媒体和日志不得提交或外发。当前仅保留本次迁移前的私有回滚备份；不得将其表述为已验证的数据恢复保证。

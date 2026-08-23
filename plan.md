@@ -1,4 +1,6 @@
-# NapCat 切换至 SnowLuma 实施计划
+# NapCat 切换至 SnowLuma 实施记录与历史计划
+
+> 本文记录已完成的切换过程和历史决策。当前版本与运行状态以私有 `.env`、`runtime/`、实际容器及 `README.md`、`PRD.md`、`docs/implementation-audit.md` 为准。
 
 ## 目标
 
@@ -16,8 +18,8 @@
 - 已完成维护窗口直切换：SnowLuma 已作为唯一生产 QQ 网关运行；NapCat 容器和 NapCat Adapter 均保持停止/禁用，未删除其数据或配置。
 - 已验证 Core 为 `healthy`，并通过 Compose 私有网络连接 `snowluma:3001`；唯一群的入站文本与机器人出站回复已经实际验证。
 - Core 继续使用原 `runtime/data/MaiMBot`，未迁移或重置数据库、记忆、聊天记录、表情或 Core 配置。旧表情/GIF、语音、文件与特殊消息段仍属未核验项。
-- 首次登录临时 noVNC 宿主机映射已撤销；SnowLuma 仅保留回环 WebUI `127.0.0.1:5099`，OneBot `3001` 不对宿主机公开。
-- 运营者已再次接受明文 HTTP 风险，`public-maibot-admin` 已恢复并公开 `8080`；SnowLuma 与 NapCat 均未暴露至公网。
+- 首次登录使用的临时 noVNC 配置已收敛为日常固定回环映射 `127.0.0.1:6081`；SnowLuma WebUI 绑定 `127.0.0.1:5099`，OneBot `3001` 不对宿主机公开。
+- `public-maibot-admin` 当前未运行；其配置若启动将公开明文 HTTP `8080`。SnowLuma 与 NapCat 均未暴露至公网。
 - 维护窗口前创建的完整私有回滚备份仍保留；须完成稳定观察并由运营者确认精确目标后才可删除。
 
 ### 当前本机 SSH 转发基线
@@ -33,7 +35,7 @@
 
 ## 端口、SSH 与秘密方案
 
-当前受控管理入口保持不变：MaiBot WebUI 为服务器 `127.0.0.1:18001`，本机 SSH 转发 `20003 → 18001`；NapCat WebUI 为服务器 `127.0.0.1:6099`，本机 SSH 转发 `20002 → 6099`。公网 `8080` 仅为现有 Caddy 到 MaiBot WebUI 的明文 HTTP 代理，不扩展到 SnowLuma。
+历史实施期间的受控管理入口包括 MaiBot WebUI `127.0.0.1:18001`（SSH 转发 `20003`）和 NapCat WebUI `127.0.0.1:6099`（SSH 转发 `20002`）。当前生产仍使用 MaiBot WebUI `20003` 与 SnowLuma WebUI `20004`；NapCat 已停止，公网管理代理未运行。
 
 新增 SnowLuma 的管理入口如下：
 
