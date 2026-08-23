@@ -4,7 +4,7 @@
 
 本仓库是 MaiBot 私有 QQ 群聊人格助手的部署配置与文档仓库，不是 MaiBot 上游源码。当前运行实例位于 Debian VM，由 Docker Compose 管理。
 
-- `maibot-core`：MaiBot `1.2.1`，当前为 `healthy`；Core schema `40`，已完成 `36 → 40` 无损迁移核验。
+- `maibot-core`：MaiBot `1.2.3`，内置 WebUI `1.7.2`，当前为 `healthy`；Core schema `40`，已完成 `vector → vector_intent` 配置迁移核验。
 - `maibot-snowluma`：SnowLuma `v1.14.3`，当前运行中；其容器具备 `SYS_PTRACE` 与 `seccomp=unconfined`。
 - Adapter：MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 当前启用。NapCat Adapter 已禁用。
 - `maibot-napcat`：NapCat `v4.18.18`，当前停止并保留回滚资料；不得与 SnowLuma 同时登录生产 QQ。

@@ -4,7 +4,7 @@
 
 ## 当前服务与访问方式
 
-- MaiBot Core/WebUI `1.2.1`：服务器 `127.0.0.1:18001`，本机 SSH 转发 `http://127.0.0.1:20003/`。
+- MaiBot Core `1.2.3` / WebUI `1.7.2`：服务器 `127.0.0.1:18001`，本机 SSH 转发 `http://127.0.0.1:20003/`。
 - NapCat `v4.18.18` WebUI：服务器 `127.0.0.1:6099`，本机 SSH 转发 `http://127.0.0.1:20002/`；NapCat 当前停止，仅保留回滚资料。
 - Core、NapCat、SnowLuma 与可选 Caddy 管理代理由 `compose.yaml` 管理。
 - SnowLuma `v1.14.3` 当前运行并接管 QQ；其 Adapter 使用固定提交 `403de73785d1755a9a6b9828e403ed30399b638d`。

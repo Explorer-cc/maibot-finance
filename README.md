@@ -1,12 +1,12 @@
 # MaiBot 跨市场金融群聊人格助手
 
-基于 [MaiBot](https://github.com/MaiM-with-u/MaiBot) 1.2.1 的 QQ 群聊拟人化智能体。麦麦（MaiSaka）是一个长期生活在私有 QQ 群里的数字人格：平时正常闲聊；金融话题中保持“越菜越爱玩”的激进投资损友风格。
+基于 [MaiBot](https://github.com/MaiM-with-u/MaiBot) 1.2.3 的 QQ 群聊拟人化智能体。麦麦（MaiSaka）是一个长期生活在私有 QQ 群里的数字人格：平时正常闲聊；金融话题中保持“越菜越爱玩”的激进投资损友风格。
 
 本仓库是部署配置与文档仓库，不是 MaiBot 上游源码。MaiBot 通过 Docker Compose 以锁定版本运行，不修改其核心源码。
 
 ## 当前运行基线
 
-- MaiBot Core/WebUI：`1.2.1`；镜像以私有 `.env` 中的 digest 锁定。升级已将 Core schema 从 `36` 迁移到 `40`，未重置数据库或 A_Memorix 数据。
+- MaiBot Core/WebUI：Core `1.2.3`，内置 WebUI `1.7.2`；镜像以私有 `.env` 中的 digest 锁定。此次升级已执行 `vector → vector_intent` 配置迁移，未重置数据库或 A_Memorix 数据；升级前私有回滚备份保存在 `runtime/backups/upgrade-before-20260824-015139/`。
 - QQ 接入：SnowLuma `v1.14.3`（私有 `.env` 锁定 digest）与 MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d`。NapCat `v4.18.18` 及其 Adapter 已停止/禁用，作为回滚材料保留。
 - 模型：当前配置登记 DeepSeek、DashScope、LLMX、ZhipuAI 四个 API 提供商；实际任务分配见 [`PRD.md`](PRD.md)。embedding 配置为 `qwen-embedding`、维度 `1024`，实际响应尚未记录。
 - 群聊能力：唯一 allowlist 群、行为/表达/黑话学习、表情包收集、A_Memorix 查询、人物画像注入、群摘要与人物事实自动写回。引用回复和富回复均关闭。

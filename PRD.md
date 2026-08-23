@@ -10,7 +10,7 @@
 
 | 组件 | 当前状态 |
 | --- | --- |
-| MaiBot Core | `1.2.1`，`maibot-core` 为 `healthy`；Core schema `40`，升级未重置既有数据 |
+| MaiBot Core | `1.2.3`，内置 WebUI `1.7.2`，`maibot-core` 为 `healthy`；Core schema `40`，升级执行了 `vector → vector_intent` 配置迁移，未重置既有数据 |
 | SnowLuma | `v1.14.3`，`maibot-snowluma` 正在运行；WebUI 绑定 `127.0.0.1:5099`，noVNC 固定绑定 `127.0.0.1:6081` |
 | Adapter | MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 已启用；NapCat Adapter 已禁用 |
 | NapCat | `v4.18.18`，`maibot-napcat` 已停止并保留回滚资料 |

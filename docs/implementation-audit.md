@@ -2,11 +2,11 @@
 
 ## 结论
 
-当前实例运行 MaiBot `1.2.1`；Core 为 `healthy`，SnowLuma 是唯一运行中的 QQ 网关，唯一 allowlist 群的入站文本与 MaiBot 出站回复已验证。升级将 Core schema 从 `36` 迁移到 `40`；数据库、A_Memorix 记忆、聊天记录与表情目录未重置。升级后的 SQLite 与 A_Memorix metadata `quick_check` 均通过，既有记忆表行数、向量 ID 集合和向量二进制保持一致。
+当前实例运行 MaiBot `1.2.3`，内置 WebUI `1.7.2`；Core 为 `healthy`，SnowLuma 是唯一运行中的 QQ 网关。此次升级执行了 `vector → vector_intent` 配置迁移；数据库、A_Memorix 记忆、聊天记录与表情目录未重置。升级后的 SQLite `quick_check` 通过，WebUI 健康接口正常；升级后 QQ 文本收发尚待本次维护窗口内重新核验。
 
 | 项目 | 当前事实 |
 | --- | --- |
-| MaiBot | `1.2.1`；镜像 digest 由私有 `.env` 锁定；Core schema `40` |
+| MaiBot | `1.2.3`；内置 WebUI `1.7.2`；镜像 digest 由私有 `.env` 锁定；Core schema `40` |
 | SnowLuma | `v1.14.3`；WebUI 绑定服务器 `127.0.0.1:5099`，noVNC 固定绑定 `127.0.0.1:6081`；OneBot `3001` 仅限 Compose 私有网络 |
 | Adapter | MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 已启用；NapCat Adapter 已禁用 |
 | NapCat | `v4.18.18` 已停止，数据与配置保留以便回滚 |
@@ -44,4 +44,4 @@
 
 ## 变更约束
 
-升级前应记录镜像 digest、Adapter commit、配置迁移说明和验证结果。不要以 `latest` 更新镜像；不要通过 `--reset-config --yes-reset-config` 覆盖已有 `runtime/`，除非运营者明确要求恢复操作。
+升级前应记录镜像 digest、Adapter commit、配置迁移说明和验证结果。2026-08-24 已使用锁定 digest `sha256:79bb84671a617ba11327c910f847348490573e39bc06f50a528e2b1ca185d129` 升级 MaiBot Core/WebUI，并在 `runtime/backups/upgrade-before-20260824-015139/` 保留通过 SHA-256 校验的私有回滚备份。不要以 `latest` 更新镜像；不要通过 `--reset-config --yes-reset-config` 覆盖已有 `runtime/`，除非运营者明确要求恢复操作。
