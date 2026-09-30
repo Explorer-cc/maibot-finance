@@ -27,6 +27,21 @@ docker-compose --env-file .env -f compose.yaml --profile snowluma up -d core sno
 
 这两个命令使用现有 `runtime/`，不重置配置。不要为日常运维运行 `deploy/bootstrap.py`，也不要执行 `--reset-config --yes-reset-config`。
 
+### 2026-09-14 后的链路核验与两类偶发故障恢复
+
+`docker-compose ps` 显示 `healthy` 只代表 Core WebUI HTTP 可达，不代表消息链路可用。链路完整核验依次为：
+
+1. SnowLuma 日志（`runtime/snowluma/data/logs/`）当日文件出现 `login detected` 与 `[OneBot.WS-Server] [ws-default] listening 0.0.0.0:3001`。
+2. Core 容器内存在到 `snowluma:3001` 的 ESTABLISHED 连接（适配器已回连）。
+3. Core 容器内存在存活的 `runner_main` 进程与已连接的 `/tmp/maibot-plugin-*.sock`（插件运行时正常）。
+
+两类已验证的偶发故障与恢复手段：
+
+- SnowLuma QQ 卡在 `login identity discovered; awaiting readiness`、`LoginProbe` 超时、`3001` 不监听 → `docker restart maibot-snowluma` 重试 Hook 注入，约 30 秒内恢复，无需扫码。
+- Core 日志出现 `插件运行时启动失败: 等待 Runner 连接失败: Runner 进程已退出，退出码 1`（Runner 报缺少 `MAIBOT_IPC_ADDRESS`/`MAIBOT_SESSION_TOKEN`，上游缺陷，周期重试无法自愈）→ `docker-compose --env-file .env -f compose.yaml up -d --force-recreate core`。
+
+恢复后在唯一白名单群发送一条消息并确认 MaiBot 回复，方为消息级闭环；2026-09-14 恢复后此项尚未完成。
+
 ## 可选公网管理入口
 
 `public-maibot-admin` 默认不随 Core/NapCat 启动。若运营者明确接受明文 HTTP 风险，可填写私有 `.env` 中的 Caddy 与 Basic Auth 项，并执行：
@@ -39,6 +54,7 @@ docker-compose --env-file .env -f compose.yaml --profile snowluma up -d core sno
 
 ## 尚待记录的验证证据
 
+- 2026-09-14 恢复后的群内消息级收发（发送一条消息并确认回复）。
 - Qwen-VL 对一张预先约定、无敏感信息且与问题同发的测试图片的实际处理结果。
 - Qwen embedding 的实际 API 响应维度与 `.env` 声明的 `1024` 是否一致。
 - 若启用公网管理代理，未授权访问的 `401`、二次 Token 校验以及内部端口未公开的检查结果。

@@ -7,11 +7,11 @@
 ## 当前运行基线
 
 - MaiBot Core/WebUI：Core `1.2.3`，内置 WebUI `1.7.2`；镜像以私有 `.env` 中的 digest 锁定。此次升级已执行 `vector → vector_intent` 配置迁移，未重置数据库或 A_Memorix 数据；升级前私有回滚备份保存在 `runtime/backups/upgrade-before-20260824-015139/`。
-- QQ 接入：SnowLuma `v1.14.3`（私有 `.env` 锁定 digest）与 MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d`。NapCat `v4.18.18` 及其 Adapter 已停止/禁用，作为回滚材料保留。
-- 模型：当前配置登记 DeepSeek、DashScope、LLMX、ZhipuAI 四个 API 提供商；实际任务分配见 [`PRD.md`](PRD.md)。embedding 配置为 `qwen-embedding`、维度 `1024`，实际响应尚未记录。
+- QQ 接入：SnowLuma `v1.14.3`（私有 `.env` 锁定 digest）与 MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d`。NapCat 容器已从 Docker 移除，其 Adapter 禁用；`runtime/napcat-config/` 与 `runtime/backups/` 中的回滚材料保留。
+- 模型：当前配置登记 `商汤deepseek`、`基元律动`、`基元律动2`、`DashScope`、`tokneflux`、`gemini` 六个 API 提供商；实际任务分配见 [`PRD.md`](PRD.md)。embedding 配置为 `text-embedding-v4`，实际维度与响应尚未记录。`gemini` 提供商 API Key 当前无效，各任务靠回退链工作，回复未中断。
 - 群聊能力：唯一 allowlist 群、行为/表达/黑话学习、表情包收集、A_Memorix 查询、人物画像注入、群摘要与人物事实自动写回。引用回复和富回复均关闭。
 - 插件：除 SnowLuma Adapter 外，当前配置还启用了智能戳一戳、内部回复再审、Pixiv 图片、照片 EXIF 定位、每日群聊分析和联网搜索插件；详细作用域与风险见 [`docs/implementation-audit.md`](docs/implementation-audit.md)。
-- 已验证：Core 健康、SnowLuma 内网 OneBot 连接，以及唯一白名单群的文本收发。旧表情/GIF、语音、文件和特殊消息段尚未核验。
+- 已验证：Core 健康、SnowLuma 内网 OneBot 连接，以及唯一白名单群的文本收发。旧表情/GIF、语音、文件和特殊消息段尚未核验（语音因无 ffmpeg 降级为文本占位）。Core 健康检查不覆盖插件运行时与适配器连通性；2026-09-14 曾发生两类已知偶发故障致消息链路中断约 50 分钟，恢复手段见 [`AGENTS.md`](AGENTS.md)「已知运行风险与恢复手段」。
 
 ## 运行边界
 
@@ -28,7 +28,7 @@
 | --- | --- |
 | `core` | MaiBot 核心：人格、群聊观察、回复、记忆、插件与 WebUI |
 | `snowluma` | SnowLuma 与 SnowLuma Adapter：当前 QQ 消息接入；容器使用 `SYS_PTRACE` 与 `seccomp=unconfined`，存在非官方 QQ 接入风险 |
-| `napcat` | 已停止的旧 QQ 接入与 Adapter；保留用于回滚，不与 SnowLuma 同时登录生产账号 |
+| `napcat` | 已移除的旧 QQ 接入（容器已删，配置与回滚备份保留）；不与 SnowLuma 同时登录生产账号 |
 | `sqlite-web` | 可选只读管理工具，按需通过 SSH 隧道使用 |
 | `public-maibot-admin` | 当前未运行；配置保留，启动后公开 HTTP `8080`，存在明文传输风险 |
 
