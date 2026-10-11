@@ -49,23 +49,30 @@
 
 ### 模型配置
 
-当前 `model_config.toml` 登记六个 API 提供商：`商汤deepseek`、`基元律动`、`基元律动2`、`DashScope`、`tokneflux`（未挂任何模型）与 `gemini`（`client_type = "gemini"`）。原 DeepSeek、LLMX、ZhipuAI 提供商已不在当前配置中。
+当前 `model_config.toml` 登记七个 API 提供商：`商汤deepseek`（token.sensenova.cn）、`DashScope`、`gemini`（`client_type = "gemini"`，api.wanzhao-ysy.com 中转，整体 403 不可用，已不挂任何任务）、`Agnes`（apihub.agnes-ai.com，免费档）、`InkStone`（discovery-api.intern-ai.org.cn）、`TierFlow`（tierflow.cn，2026-10-11 配额耗尽，已不挂任务）与 `南梁API`（api.llm.pm，OpenAI 协议，需 `/v1` 后缀，2026-10-11 登记并挂载 `deepseek-v4.1-flash`，直连实测 200，置于 replyer/utils 第二位）。`基元律动`、`基元律动2`、`tokneflux` 已不在当前配置中。
 
-除留空任务外，各任务候选列表均以 `gemini-3.8-flash` 与 `gemini-3.7-flash` 开头，选择策略为 `balance`：
+除留空任务外，各任务选择策略为 `sequential`；2026-10-09 应运营者要求将 `Agnes` 系列自队首降级到各列表末尾；2026-10-11 应运营者要求将 TierFlow 的 `tierflow`/`tierflow_pro`（24h 内 826 次 403 配额不足）、InkStone 的 `intern-s2`/`qwen3.8-27b`（实测响应 `choices` 为空的结构损坏）与 `agnes-2.0-flash`（免费档持续 429）自全部任务列表摘除，模型定义与 Key 保留：
 
-| 任务 | 当前候选模型 |
+| 任务 | 当前候选模型（按序） |
 | --- | --- |
-| 回复（replyer） | `gemini-3.8/3.7-flash`、基元律动 `deepseek-v4-flash-0731`/`glm-5.3-flash`/`deepseek-v4-pro`、基元律动2 `deepseek-v4-flash`/`deepseek-v4-pro`/`GLM-5.2`/`minimax-m2.7` |
-| 规划（planner） | `gemini-3.8/3.7-flash`、基元律动 `deepseek-v4-pro`/`deepseek-v4-flash-0731`/`glm-5.3-flash`、商汤 `glm-5.2`、基元律动2 `deepseek-v4-flash`/`deepseek-v4-pro`/`minimax-m2.7`/`GLM-5.2` |
-| 长期记忆（memory） | `gemini-3.8/3.7-flash`、基元律动 `deepseek-v4-pro`、商汤 `deepseek-v4-flash`、基元律动2 `minimax-m2.7`/`deepseek-v4-pro`/`qwen3.8` |
-| 中期记忆（mid_memory） | `gemini-3.8/3.7-flash`、基元律动 `qwen3.8-max`、基元律动2 `qwen3.8` |
-| 通用（utils） | `gemini-3.8/3.7-flash`、基元律动 `qwen3.8-max`/`deepseek-v4-pro`/`deepseek-v4-flash-0731`、基元律动2 `qwen3.8`/`deepseek-v4-pro` |
-| 表达使用（expression_use） | `gemini-3.8/3.7-flash`、商汤 `deepseek-v4-flash`、基元律动2 `qwen3.8` |
-| 表情包与视觉（emoji/vlm） | `gemini-3.8/3.7-flash`、`sensenova-6.8-flash-lite`、基元律动2 `qwen3.8` |
+| 回复（replyer） | `Agents-A1`、`deepseek-v4.1-flash`、`deepseek-v4-flash-0731`、`sensenova-6.8-flash-lite`、`deepseek-v4-flash`、`glm-5.2`、`agnes-3.0-flash`、`agnes-2.5-flash` |
+| 规划（planner） | `deepseek-v4-flash-0731`、`glm-5.2`、`deepseek-v4-flash`、`agnes-3.0-flash`、`agnes-2.5-flash` |
+| 长期记忆（memory） | `deepseek-v4-flash`、`agnes-3.0-flash`、`agnes-2.5-flash` |
+| 中期记忆（mid_memory） | `agnes-3.0-flash`、`agnes-2.5-flash`（无其他候选，agnes 仍居首） |
+| 通用（utils） | `deepseek-v4-flash-0731`、`deepseek-v4.1-flash`、`Agents-A1`、`agnes-3.0-flash`、`agnes-2.5-flash` |
+| 表达使用（expression_use） | `deepseek-v4-flash`、`agnes-3.0-flash`、`agnes-2.5-flash` |
+| 表情包（emoji） | `sensenova-6.8-flash-lite`、`agnes-3.0-flash`、`agnes-2.5-flash` |
+| 视觉（vlm） | `sensenova-6.8-flash-lite`、`agnes-2.5-flash` |
 | embedding | `text-embedding-v4`（DashScope） |
-| 学习（learner）、语音（voice） | 留空，分别回退到 utils 与原有选择逻辑 |
+| 学习（learner）、语音（voice）、图像 embedding（image_embedding） | 留空，分别回退到 utils 与原有选择逻辑 |
 
-已知问题：`gemini` 供应商（`api.wanzhao-ysy.com` 中转）当前 API Key 无效，Core 日志持续出现 401 硬错误后回退成功，回复链路未中断但增加延迟与错误日志；这些硬错误还触发 MaiBot 看门狗自愈重启 bot.py，2026-09-13 活跃期观察到约每 10 分钟一次。配置中还登记了未被任务引用的 `qwen3.7-text-embedding`。模型登记或候选顺序不等于已逐一完成真实调用验收；目前仅文本回复经回退模型验证可用。embedding 自 `qwen-embedding` 变更为 `text-embedding-v4` 的时间与是否重建索引未记录，实际维度与存量索引一致性均未核验。
+供应商归属：`Agents-A1`/`deepseek-v4-flash-0731` 为 InkStone；`deepseek-v4.1-flash` 为南梁API；`deepseek-v4-flash`/`glm-5.2`/`sensenova-6.8-flash-lite` 为商汤deepseek；`agnes-3.0-flash`/`agnes-2.5-flash` 为 Agnes；`text-embedding-v4` 为 DashScope。
+
+2026-10-09 对全部 13 个在用模型逐一真实调用核验：`gemini-3.8-flash`/`gemini-3.7-flash` 返回 HTTP 403（Cloudflare 1010，中转整体不可用），已从全部任务列表摘除，模型定义与 Key 保留在配置与备份中；`商汤deepseek-v4-flash`/`商汤glm-5.2` 为错误模型 ID（404 model is not found），已更正为商汤端点真实 ID `deepseek-v4-flash`/`glm-5.2` 并复核可用（存在瞬态 tpm/rpm 429，重试即恢复）；`sensenova-6.8-flash-lite` 同样存在瞬态 429；其余模型均 200。修改前备份：`runtime/backups/model_config.toml.bak-20261009-112950`。
+
+2026-10-11 逐一真实调用核验全部 16 个模型定义：两个 gemini 维持 403（Cloudflare 1010）；`intern-s2`/`qwen3.8-27b` 返回 HTTP 200 但 `choices` 为空的结构损坏响应，与生产 120s 硬超时/静默排队表现一致；`tierflow`/`tierflow_pro` 探测瞬间 200，但此前 24h 生产日志记录 826 次 403 `insufficient_user_quota`（416+410），探测时配额状态不稳定；`agnes-2.0-flash` 3 次重试后仍 429 免费档限流；其余在用模型均 200。当日按运营者指令摘除上述 5 个模型、登记 `南梁API` 并挂载 `deepseek-v4.1-flash` 于 replyer/utils 第二位（`/v1/models` 列出 24 个模型，其余未挂载）。修改前备份：`runtime/backups/model_config.toml.bak-20261011-214235`；Core 已两次重启生效，重启后 healthy、Runner 存活、Core→snowluma:3001 ESTABLISHED 均复核通过。另实测确认 bot.py 启动路径不启动配置 FileWatcher，`model_config.toml` 修改必须重启 Core 才生效。
+
+已知问题：`Agnes` 为免费档，限流显著——2026-10-08 单日 429 记录 526 次，全部经重试/回退自愈，未造成回复中断，但会在高峰期增加回退延迟。embedding `text-embedding-v4` 调用正常（200，实测维度 1024），但指纹/维度与存量索引一致性仍未核验，记忆内核以 `embedding_fingerprint_unavailable` 降级单池运行。配置中还登记了未被任务引用的 `gemini-3.7/3.8-flash`、`qwen3.7-text-embedding`、`intern-s2`、`qwen3.8-27b`、`tierflow`、`tierflow_pro` 与 `agnes-2.0-flash`。
 
 ## 管理与网络
 

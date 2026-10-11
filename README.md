@@ -8,7 +8,7 @@
 
 - MaiBot Core/WebUI：Core `1.2.3`，内置 WebUI `1.7.2`；镜像以私有 `.env` 中的 digest 锁定。此次升级已执行 `vector → vector_intent` 配置迁移，未重置数据库或 A_Memorix 数据；升级前私有回滚备份保存在 `runtime/backups/upgrade-before-20260824-015139/`。
 - QQ 接入：SnowLuma `v1.14.3`（私有 `.env` 锁定 digest）与 MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d`。NapCat 容器已从 Docker 移除，其 Adapter 禁用；`runtime/napcat-config/` 与 `runtime/backups/` 中的回滚材料保留。
-- 模型：当前配置登记 `商汤deepseek`、`基元律动`、`基元律动2`、`DashScope`、`tokneflux`、`gemini` 六个 API 提供商；实际任务分配见 [`PRD.md`](PRD.md)。embedding 配置为 `text-embedding-v4`，实际维度与响应尚未记录。`gemini` 提供商 API Key 当前无效，各任务靠回退链工作，回复未中断。
+- 模型：当前配置登记 `商汤deepseek`、`DashScope`、`gemini`（中转整体 403 不可用，已不挂任务）、`Agnes`（免费档）、`InkStone`、`TierFlow`（2026-10-11 配额耗尽，已不挂任务）与 `南梁API`（api.llm.pm，已挂载 `deepseek-v4.1-flash` 并置于 replyer/utils 第二位）七个 API 提供商；各任务策略 `sequential`，2026-10-11 已将 `intern-s2`/`qwen3.8-27b`（响应结构损坏）、`tierflow`/`tierflow_pro`（403 配额不足）与 `agnes-2.0-flash`（限流）自全部任务列表摘除（定义保留），实际分配见 [`PRD.md`](PRD.md)，并已对全部模型定义逐一真实调用核验；embedding 为 `text-embedding-v4`（实测维度 1024），指纹与存量索引一致性未核验。
 - 群聊能力：唯一 allowlist 群、行为/表达/黑话学习、表情包收集、A_Memorix 查询、人物画像注入、群摘要与人物事实自动写回。引用回复和富回复均关闭。
 - 插件：除 SnowLuma Adapter 外，当前配置还启用了智能戳一戳、内部回复再审、Pixiv 图片、照片 EXIF 定位、每日群聊分析和联网搜索插件；详细作用域与风险见 [`docs/implementation-audit.md`](docs/implementation-audit.md)。
 - 已验证：Core 健康、SnowLuma 内网 OneBot 连接，以及唯一白名单群的文本收发。旧表情/GIF、语音、文件和特殊消息段尚未核验（语音因无 ffmpeg 降级为文本占位）。Core 健康检查不覆盖插件运行时与适配器连通性；2026-09-14 曾发生两类已知偶发故障致消息链路中断约 50 分钟，恢复手段见 [`AGENTS.md`](AGENTS.md)「已知运行风险与恢复手段」。

@@ -11,7 +11,7 @@
 | Adapter | MaiBot-SnowLuma-Adapter `403de73785d1755a9a6b9828e403ed30399b638d` 已启用；NapCat Adapter 已禁用 |
 | NapCat | `v4.18.18` 容器已从 Docker 移除（`docker ps -a` 无此容器）；`runtime/napcat-config/` 与 `runtime/backups/` 回滚资料保留 |
 | Core 管理面 | `127.0.0.1:18001`；本地 SSH 转发为 `20003` |
-| 模型 | 已登记 `商汤deepseek`、`基元律动`、`基元律动2`、`DashScope`、`tokneflux`（无模型）、`gemini` 六个提供商；各任务候选以 `gemini-3.8/3.7-flash` 开头（策略 `balance`），回退到商汤/基元律动 deepseek、GLM、qwen、minimax 系列，视觉另含 `sensenova-6.8-flash-lite`，embedding 为 `text-embedding-v4`。`gemini` Key 无效（401），任务经回退链完成，回复未中断；embedding 维度未核验 |
+| 模型 | 已登记 `商汤deepseek`、`DashScope`、`gemini`（403 不可用，不挂任务）、`Agnes`（免费档）、`InkStone`、`TierFlow`（2026-10-11 配额耗尽摘除任务）与 `南梁API`（api.llm.pm，挂载 `deepseek-v4.1-flash` 于 replyer/utils 第二位）七个提供商；任务策略 `sequential`。2026-10-11 逐一真实调用核验全部 16 个模型定义并按运营者指令摘除 `intern-s2`/`qwen3.8-27b`（200 但 `choices` 为空）、`tierflow`/`tierflow_pro`（24h 生产 826 次 403 配额）与 `agnes-2.0-flash`（429），定义与 Key 保留；embedding 为 `text-embedding-v4`（实测维度 1024），指纹未核验，记忆内核降级单池；Core 已重启生效并复核链路 |
 | 记忆与学习 | A_Memorix 查询、人物画像注入、群摘要/事实写回、行为/表达/黑话学习和表情包收集均已开启；富回复关闭，表情包内容过滤关闭 |
 | 渠道隔离 | 单群白名单、私聊白名单为空、自身消息过滤开启 |
 | MCP 与工具 | MCP 关闭；没有专用行情或交易插件，但存在联网搜索、图片下载、EXIF 定位、群聊分析和第三方 Python 插件 |
